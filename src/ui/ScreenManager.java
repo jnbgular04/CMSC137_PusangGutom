@@ -57,6 +57,7 @@ public class ScreenManager {
      */
     public void showMainMenu() {
         cardLayout.show(cardContainer, MENU_VIEW);
+        System.out.println("🔍 STATE CHECK: View Swapped to -> " + MENU_VIEW);
     }
 
     /**
@@ -73,6 +74,7 @@ public class ScreenManager {
         }
         
         cardLayout.show(cardContainer, GAME_VIEW);
+        System.out.println("🔍 STATE CHECK: View Swapped to -> " + GAME_VIEW);
         
         // Ensure the game panel can receive keyboard/mouse focus
         gameStagePanel.requestFocusInWindow(); 

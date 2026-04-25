@@ -8,3 +8,6 @@ bin/
 # Ignore OS files
 .DS_Store
 Thumbs.db
+/target/
+
+#Ignore maven

@@ -1,6 +1,7 @@
 package ui;
 
 import javax.swing.*;
+import graphics.GameStage;
 import java.awt.*;
 
 /**
@@ -33,14 +34,8 @@ public class ScreenManager {
         cardLayout = new CardLayout();
         cardContainer = new JPanel(cardLayout);
         
-        // TODO: Replace with Jaz's actual MainMenuPanel and GameStage implementations
-        mainMenuPanel = new JPanel();
-        mainMenuPanel.setBackground(Color.DARK_GRAY);
-        mainMenuPanel.add(new JLabel("MAIN MENU PLACEHOLDER"));
-        
-        gameStagePanel = new JPanel();
-        gameStagePanel.setBackground(Color.BLACK);
-        gameStagePanel.add(new JLabel("GAME STAGE PLACEHOLDER"));
+        mainMenuPanel = new MainMenuPanel(mainFrame, this);
+        gameStagePanel = new GameStage();
         
         // Add panels to the card container
         cardContainer.add(mainMenuPanel, MENU_VIEW);

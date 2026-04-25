@@ -38,16 +38,16 @@ public class Main {
             
             // Show the window
             mainFrame.setVisible(true);
-            
-            // ==========================================
-            // 🚨 TEMPORARY AUTO-START FOR STEVEN'S TESTING
-            // Remove this block later when Jaz implements the Main Menu buttons!
-            // ==========================================
-            System.out.println("--- TRIGGERING AUTO-START FOR ENGINE TESTING ---");
-            screenManager.showGame(false); // Swaps to game view
-            gameManager.startGame();       // Resets timer/score
-            gameLoop.start();              // Starts the 60FPS thread
-            
+//            
+//            // ==========================================
+//            // 🚨 TEMPORARY AUTO-START FOR STEVEN'S TESTING
+//            // Remove this block later when Jaz implements the Main Menu buttons!
+//            // ==========================================
+//            System.out.println("--- TRIGGERING AUTO-START FOR ENGINE TESTING ---");
+//            screenManager.showGame(false); // Swaps to game view
+//            gameManager.startGame();       // Resets timer/score
+//            gameLoop.start();              // Starts the 60FPS thread
+//            
         });
     }
 }

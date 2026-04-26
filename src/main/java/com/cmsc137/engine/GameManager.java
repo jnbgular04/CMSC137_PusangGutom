@@ -1,12 +1,13 @@
-package engine;
-
-import ui.ScreenManager;
-import javax.swing.SwingUtilities;
-import entities.Mouse;
+package com.cmsc137.engine;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import javax.swing.SwingUtilities;
+
+import com.cmsc137.entities.Mouse;
+import com.cmsc137.ui.ScreenManager;
 
 /**
  * GameManager tracks the score, current game state, and mouse spawning logic.

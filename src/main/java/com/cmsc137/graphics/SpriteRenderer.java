@@ -1,9 +1,12 @@
-package graphics;
+package com.cmsc137.graphics;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.util.List;
-import entities.Cat;
-import entities.Mouse;
+
+import com.cmsc137.entities.Cat;
+import com.cmsc137.entities.Mouse;
 
 public class SpriteRenderer {
 

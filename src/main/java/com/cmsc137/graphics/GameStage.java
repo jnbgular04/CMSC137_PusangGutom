@@ -1,11 +1,16 @@
-package graphics;
+package com.cmsc137.graphics;
 
-import javax.swing.*;
-import java.awt.*;
-import entities.Cat;
-import entities.Mouse;
-import engine.GameManager;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.util.List;
+
+import javax.swing.JPanel;
+
+import com.cmsc137.engine.GameManager;
+import com.cmsc137.entities.Cat;
+import com.cmsc137.entities.Mouse;
 
 public class GameStage extends JPanel {
 

@@ -1,12 +1,11 @@
-package main;
+package com.cmsc137.main;
+
+import java.awt.Dimension;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import java.awt.Dimension;
 
-import ui.ScreenManager;
-import engine.GameManager;
-import engine.GameLoop;
+import com.cmsc137.ui.ScreenManager;
 
 /**
  * Main bootstraps the game, initializes the JFrame, and sets up the initial view.

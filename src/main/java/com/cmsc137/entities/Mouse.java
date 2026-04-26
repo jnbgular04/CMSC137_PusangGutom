@@ -1,4 +1,4 @@
-package entities;
+package com.cmsc137.entities;
 
 /**
  * Dummy data model for target coordinates.

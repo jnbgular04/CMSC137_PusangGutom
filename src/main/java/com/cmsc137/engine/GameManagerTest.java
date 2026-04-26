@@ -1,7 +1,8 @@
-package engine;
+package com.cmsc137.engine;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for Steven's core game logic.

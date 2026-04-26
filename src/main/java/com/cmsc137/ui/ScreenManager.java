@@ -1,10 +1,13 @@
-package ui;
+package com.cmsc137.ui;
 
-import javax.swing.*;
-import graphics.GameStage;
-import engine.GameManager;
-import engine.GameLoop;
-import java.awt.*;
+import java.awt.CardLayout;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+import com.cmsc137.engine.GameLoop;
+import com.cmsc137.engine.GameManager;
+import com.cmsc137.graphics.GameStage;
 
 public class ScreenManager {
 

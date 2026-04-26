@@ -1,8 +1,20 @@
-package ui;
+package com.cmsc137.ui;
 
-import javax.swing.*;
-import java.awt.*;
-import ui.Colors;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 public class MainMenuPanel extends JPanel {
 

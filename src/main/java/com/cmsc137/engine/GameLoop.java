@@ -1,6 +1,6 @@
-package engine;
+package com.cmsc137.engine;
 
-import graphics.GameStage;
+import com.cmsc137.graphics.GameStage;
 /**
  * GameLoop manages the core 60FPS thread timer.
  * It is responsible for driving the GameManager logic and triggering UI repaints.

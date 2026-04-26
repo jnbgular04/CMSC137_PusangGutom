@@ -1,11 +1,13 @@
-package engine;
-
-import ui.ScreenManager;
-import entities.Mouse;
+package com.cmsc137.engine;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import javax.swing.SwingUtilities;
+
+import com.cmsc137.entities.Mouse;
+import com.cmsc137.ui.ScreenManager;
 
 /**
  * GameManager tracks the score, current game state, and mouse spawning logic.
@@ -46,7 +48,7 @@ public class GameManager {
      */
     public void startGame() {
         this.score = 0;
-        this.timeLeftSeconds = 60; // 1-minute countdown
+        this.timeLeftSeconds = 10; // 1-minute countdown
         this.isGameOver = false;
         this.isGameActive = true;
         this.frameCounter = 0;
@@ -117,7 +119,10 @@ public class GameManager {
     private void endSessionAndReturnToMenu() {
         isGameActive = false;
         System.out.println("Returning to Main Menu.");
-        screenManager.showMainMenu();
+        
+        SwingUtilities.invokeLater(() -> {
+            screenManager.showMainMenu();
+        });
     }
     
     // --- Integration Methods for Yanika & Jaz ---

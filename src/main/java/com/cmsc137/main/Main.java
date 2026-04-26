@@ -1,12 +1,11 @@
-package main;
+package com.cmsc137.main;
+
+import java.awt.Dimension;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import java.awt.Dimension;
 
-import ui.ScreenManager;
-import engine.GameManager;
-import engine.GameLoop;
+import com.cmsc137.ui.ScreenManager;
 
 /**
  * Main bootstraps the game, initializes the JFrame, and sets up the initial view.
@@ -29,25 +28,23 @@ public class Main {
             mainFrame.setResizable(false);
             mainFrame.setLocationRelativeTo(null);
             
-            // 1. Initialize the Switchboard (UI)
+   
             ScreenManager screenManager = new ScreenManager(mainFrame);
-            
-            // 2. Initialize the Engine (Logic)
-            GameManager gameManager = new GameManager(screenManager);
-            GameLoop gameLoop = new GameLoop(gameManager);
+            // Screen manager manages itself
+ 
             
             // Show the window
             mainFrame.setVisible(true);
-            
-            // ==========================================
-            // 🚨 TEMPORARY AUTO-START FOR STEVEN'S TESTING
-            // Remove this block later when Jaz implements the Main Menu buttons!
-            // ==========================================
-            System.out.println("--- TRIGGERING AUTO-START FOR ENGINE TESTING ---");
-            screenManager.showGame(false); // Swaps to game view
-            gameManager.startGame();       // Resets timer/score
-            gameLoop.start();              // Starts the 60FPS thread
-            
+//            
+//            // ==========================================
+//            // 🚨 TEMPORARY AUTO-START FOR STEVEN'S TESTING
+//            // Remove this block later when Jaz implements the Main Menu buttons!
+//            // ==========================================
+//            System.out.println("--- TRIGGERING AUTO-START FOR ENGINE TESTING ---");
+//            screenManager.showGame(false); // Swaps to game view
+//            gameManager.startGame();       // Resets timer/score
+//            gameLoop.start();              // Starts the 60FPS thread
+//            
         });
     }
 }

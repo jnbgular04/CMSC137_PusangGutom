@@ -1,4 +1,4 @@
-package entities;
+package com.cmsc137.entities;
 
 public class Cat {
     public int x, y;

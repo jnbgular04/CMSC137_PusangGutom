@@ -29,12 +29,10 @@ public class Main {
             mainFrame.setResizable(false);
             mainFrame.setLocationRelativeTo(null);
             
-            // 1. Initialize the Switchboard (UI)
+   
             ScreenManager screenManager = new ScreenManager(mainFrame);
-            
-            // 2. Initialize the Engine (Logic)
-            GameManager gameManager = new GameManager(screenManager);
-            GameLoop gameLoop = new GameLoop(gameManager);
+            // Screen manager manages itself
+ 
             
             // Show the window
             mainFrame.setVisible(true);

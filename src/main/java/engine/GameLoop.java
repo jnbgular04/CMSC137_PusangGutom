@@ -1,5 +1,6 @@
 package engine;
 
+import graphics.GameStage;
 /**
  * GameLoop manages the core 60FPS thread timer.
  * It is responsible for driving the GameManager logic and triggering UI repaints.
@@ -13,9 +14,11 @@ public class GameLoop implements Runnable {
     // Target 60 Frames Per Second
     private final double TARGET_FPS = 60.0;
     private final double TIME_PER_UPDATE = 1000000000 / TARGET_FPS; // In nanoseconds
+	private GameStage gameStage;
     
-    public GameLoop(GameManager gameManager) {
+    public GameLoop(GameManager gameManager, GameStage gameStage) {
         this.gameManager = gameManager;
+        this.gameStage = gameStage;
     }
     
     /**
@@ -59,8 +62,9 @@ public class GameLoop implements Runnable {
             }
             
             // NOTE FOR JAZ/INTEGRATION:
-            // This is where you would call gameStage.repaint() to update the graphics.
-            // gameManager.requestRepaint(); 
+            if (gameStage != null) {
+                gameStage.update(); // Triggers repaint
+            }
             
             // Sleep slightly to prevent maxing out the CPU unnecessarily 
             try {

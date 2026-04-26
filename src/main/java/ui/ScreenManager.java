@@ -2,76 +2,70 @@ package ui;
 
 import javax.swing.*;
 import graphics.GameStage;
+import engine.GameManager;
+import engine.GameLoop;
 import java.awt.*;
 
-/**
- * ScreenManager controls the JFrame and uses CardLayout to swap between
- * the MainMenuPanel, LobbyPanel, and GameStage.
- */
 public class ScreenManager {
 
     private JFrame mainFrame;
     private JPanel cardContainer;
     private CardLayout cardLayout;
-    
-    // String identifiers for the CardLayout mappings
+
     private final String MENU_VIEW = "MAIN_MENU";
     private final String GAME_VIEW = "GAME_STAGE";
-    
-    // Placeholder References (Jaz will flesh these out)
+
     private JPanel mainMenuPanel;
-    private JPanel gameStagePanel;
+    private GameStage gameStagePanel;  // Use GameStage type, not JPanel
+
+    // ADD THESE
+    private GameManager gameManager;
+    private GameLoop gameLoop;
 
     public ScreenManager(JFrame mainFrame) {
         this.mainFrame = mainFrame;
+
+    
+        this.gameManager = new GameManager(this);
+
         initializeLayout();
     }
 
-    /**
-     * Sets up the core CardLayout container and attaches it to the JFrame.
-     */
     private void initializeLayout() {
         cardLayout = new CardLayout();
         cardContainer = new JPanel(cardLayout);
-        
+
         mainMenuPanel = new MainMenuPanel(mainFrame, this);
-        gameStagePanel = new GameStage();
-        
-        // Add panels to the card container
+        gameStagePanel = new GameStage(gameManager); 
+
+        this.gameLoop = new GameLoop(gameManager, gameStagePanel);
+
         cardContainer.add(mainMenuPanel, MENU_VIEW);
         cardContainer.add(gameStagePanel, GAME_VIEW);
-        
-        // Add the container to the main window
+
         mainFrame.add(cardContainer);
         mainFrame.revalidate();
         mainFrame.repaint();
     }
 
-    /**
-     * Swaps the view to the Main Menu.
-     */
     public void showMainMenu() {
+        gameLoop.stop(); // Stop the loop when returning to menu
         cardLayout.show(cardContainer, MENU_VIEW);
-        System.out.println("🔍 STATE CHECK: View Swapped to -> " + MENU_VIEW);
+        System.out.println("STATE CHECK: View Swapped to -> " + MENU_VIEW);
     }
 
-    /**
-     * Swaps the view to the active Game Stage.
-     * @param isMultiplayer Flag to determine if local or server logic should run (M2 integration)
-     */
     public void showGame(boolean isMultiplayer) {
         if (!isMultiplayer) {
             System.out.println("Starting Singleplayer Game Mode...");
-            // NOTE FOR INTEGRATION: This is where you will initialize GameManager 
-            // and call gameManager.startGame(), followed by gameLoop.start();
+            gameManager.startGame(); // Reset and start game state
+            gameLoop.start();        // Begin the 60FPS tick loop
         } else {
             System.out.println("Starting Multiplayer Game Mode (Milestone 2)...");
         }
-        
+
         cardLayout.show(cardContainer, GAME_VIEW);
-        System.out.println("🔍 STATE CHECK: View Swapped to -> " + GAME_VIEW);
-        
-        // Ensure the game panel can receive keyboard/mouse focus
-        gameStagePanel.requestFocusInWindow(); 
+        System.out.println("STATE CHECK: View Swapped to -> " + GAME_VIEW);
+
+        gameStagePanel.requestFocusInWindow();
     }
 }

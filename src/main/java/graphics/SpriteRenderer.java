@@ -7,15 +7,11 @@ import entities.Mouse;
 
 public class SpriteRenderer {
 
-    // Cat placeholder size
+    // Placeholder Sizes
     private static final int CAT_SIZE = 40;
-
-    // Mouse placeholder size
     private static final int MOUSE_SIZE = 20;
 
-    /**
-     * Draws the Cat as an orange square with a label.
-     */
+    // Draws the cat, will replace with drawn graphics
     public void drawCat(Graphics g, Cat cat) {
         // Draw body
         g.setColor(new Color(255, 165, 0)); // Orange
@@ -28,12 +24,9 @@ public class SpriteRenderer {
         // Draw label
         g.setFont(new Font("Arial", Font.BOLD, 10));
         g.setColor(Color.WHITE);
-        g.drawString("CAT", cat.x - 10, cat.y + CAT_SIZE);
     }
 
-    /**
-     * Draws each active Mouse as a gray square with a label.
-     */
+    // Generates the mouse, will replace with drawn graphics
     public void drawMice(Graphics g, List<Mouse> mice) {
         for (Mouse mouse : mice) {
             if (!mouse.isActive) continue;
@@ -53,13 +46,4 @@ public class SpriteRenderer {
         }
     }
 
-    /**
-     * Draws the HUD (score + player name) at the top of the screen.
-     */
-    public void drawHUD(Graphics g, Cat cat) {
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 18));
-        g.drawString("Player: " + cat.name, 20, 30);
-        g.drawString("Score: " + cat.score, 20, 55);
-    }
 }

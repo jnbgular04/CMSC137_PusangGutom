@@ -9,8 +9,16 @@ import java.util.List;
 public class CollisionMath {
     
 	private CollisionMath() {}
+	
+	/**
+	 * Parameters:
+	 * clickX - X coordinate of mouse click.
+	 * clickY - X coordinate of mouse click.
+	 * mice - list of mouse entities.
+	 * padding - extra pixels.
+	 */
     
-    public static Mouse getHitEntity(int clickX, int clickY, List<Mouse> mice, int padding) {
+    public static int getHitEntity(int clickX, int clickY, List<Mouse> mice, int padding) {
     	// Implement strict 80x80 padding improving responsiveness 
     	final int mouseWidth = 80;
     	final int mouseHeight = 80;
@@ -31,7 +39,7 @@ public class CollisionMath {
     		
     		// Check if click is within bounds
     		if (clickX >= leftBound && clickX <= rightBound && clickY >= topBound && clickY <= bottomBound) {
-    			return mouse;
+    			return mouse.id;
     		}
     	}
     	// No hits

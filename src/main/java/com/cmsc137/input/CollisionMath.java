@@ -43,7 +43,7 @@ public class CollisionMath {
     		}
     	}
     	// No hits
-    	return null; 
+    	return -1; 
     }
 }
 

@@ -22,6 +22,7 @@ public class GameManager {
     private int timeLeftSeconds;
     private boolean isGameOver;
     private boolean isGameActive;
+    private int nextMouseId = 1;
     
     // Timing Variables (Based on 60FPS tick rate)
     private int frameCounter = 0;
@@ -54,6 +55,7 @@ public class GameManager {
         this.frameCounter = 0;
         this.postGameTimerFrames = 0;
         this.activeMice.clear();
+        this.nextMouseId = 1;
         
         System.out.println("Game Started! 60 Seconds on the clock.");
     }
@@ -97,10 +99,12 @@ public class GameManager {
     private void spawnMouse() {
         int randomX = randomGenerator.nextInt((PIT_MAX_X - PIT_MIN_X) + 1) + PIT_MIN_X;
         int randomY = randomGenerator.nextInt((PIT_MAX_Y - PIT_MIN_Y) + 1) + PIT_MIN_Y;
-        
-        Mouse newMouse = new Mouse(randomX, randomY);
+
+        // Pass the nextMouseId and then increment it
+        Mouse newMouse = new Mouse(nextMouseId++, randomX, randomY); 
         activeMice.add(newMouse);
-        System.out.println("Spawned Mouse at X:" + randomX + " Y:" + randomY);
+
+        System.out.println("Spawned Mouse ID [" + (nextMouseId-1) + "] at X:" + randomX + " Y:" + randomY);
     }
     
     /**

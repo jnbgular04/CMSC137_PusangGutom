@@ -28,14 +28,14 @@ public class MouseHandler extends MouseAdapter {
     	}
     	
     	int clickX = e.getX();
-    	int clickY = e.getX();
+    	int clickY = e.getY();
     	List<Mouse> activeMice = gameManager.getActiveMice();
     	
     	// Get ID from CollisionMath
     	int hitMouseId = CollisionMath.getHitEntity(clickX, clickY, activeMice, clickPadding);
     	
     	// If ID is found
-    	if (hitMouseId != 1) {
+    	if (hitMouseId != -1) {
     		gameManager.incrementScore();
     		
     		// Find mice in list and remove

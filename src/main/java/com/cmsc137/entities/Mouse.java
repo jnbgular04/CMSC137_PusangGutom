@@ -10,7 +10,7 @@ public class Mouse {
     public int y;
     public boolean isActive;
 
-    public Mouse(int x, int y) {
+    public Mouse(int id, int x, int y) {
     	this.id = id;
         this.x = x;
         this.y = y;

@@ -28,6 +28,7 @@ public class GameManager {
     private int frameCounter = 0;
     private int postGameTimerFrames = 0;
     private final int FPS = 60;
+    private int spawnTimerFrames = 0;
     
     // Spawning Constants ("The Pit" Boundaries)
     private final int PIT_MIN_X = 200;
@@ -67,23 +68,26 @@ public class GameManager {
         if (!isGameActive) return;
         
         frameCounter++;
+        spawnTimerFrames++; 
         
         // Handle active gameplay logic
         if (!isGameOver) {
-            // Every 60 frames = 1 real-world second
+            // Countdown timer (Strictly 1 second)
             if (frameCounter >= FPS) {
                 timeLeftSeconds--;
-                frameCounter = 0; // Reset frame counter for the next second
+                frameCounter = 0; 
                 
-                // Example logic: Spawn a mouse every second
-                spawnMouse();
-                
-                // Check Win/Loss Condition
                 if (timeLeftSeconds <= 0) {
                     triggerGameOver();
                 }
             }
-        } 
+            
+            // Spawn timer (Faster rate!)
+            if (spawnTimerFrames >= (FPS / 2)) { // Spawns every 0.5 seconds
+                spawnMouse();
+                spawnTimerFrames = 0;
+            }
+        }
         // Handle Post-Game "Session Result" Delay (5 seconds)
         else {
             postGameTimerFrames++;

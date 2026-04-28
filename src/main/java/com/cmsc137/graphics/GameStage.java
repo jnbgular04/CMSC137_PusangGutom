@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import com.cmsc137.engine.GameManager;
 import com.cmsc137.entities.Cat;
 import com.cmsc137.entities.Mouse;
+import com.cmsc137.input.MouseHandler;
 
 public class GameStage extends JPanel {
 
@@ -25,6 +26,10 @@ public class GameStage extends JPanel {
         setPreferredSize(new Dimension(1280, 720));
         setFocusable(true);
         spriteRenderer = new SpriteRenderer();
+
+        // WIRE THE INPUT 
+        MouseHandler mouseHandler = new MouseHandler(gameManager);
+        this.addMouseListener(mouseHandler);
 
         cat = new Cat();
         cat.x = 80;  

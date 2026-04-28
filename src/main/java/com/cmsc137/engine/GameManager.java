@@ -50,7 +50,7 @@ public class GameManager {
      */
     public void startGame() {
         this.score = 0;
-        this.timeLeftSeconds = 10; // 1-minute countdown
+        this.timeLeftSeconds = 60; // 1-minute countdown
         this.isGameOver = false;
         this.isGameActive = true;
         this.frameCounter = 0;

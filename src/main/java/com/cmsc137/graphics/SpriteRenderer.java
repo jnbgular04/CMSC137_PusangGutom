@@ -18,16 +18,65 @@ public class SpriteRenderer {
 
     private static final int MOUSE_SIZE = 100;
     
+    private final Image[] catImages = new Image[4];
     private Image catImage;
     private Image mouseImage;
+    private int localPlayerId; // for the 
 
-    public SpriteRenderer() {
+    public SpriteRenderer(int localPlayerId) {
+        this.localPlayerId = Math.max(1, Math.min(4, localPlayerId));
+        loadAssets();
+    }
+    
+    private void loadAssets() {
         try {
-        	mouseImage = ImageIO.read(new File("assets/Mouse_Target.PNG"));
-            catImage = ImageIO.read(new File("assets/cat_player.PNG"));
+            mouseImage = ImageIO.read(new File("assets/Mouse_Target.PNG"));
         } catch (IOException e) {
-            System.out.println("Error: Could not find cat.png in assets folder!");
             e.printStackTrace();
+        }
+
+        // Load per-player cat images independently so one missing file
+        // does not break all cat rendering.
+        for (int i = 1; i <= 4; i++) {
+            String catPath = "assets/cat_player" + i + ".PNG";
+            try {
+                catImages[i - 1] = ImageIO.read(new File(catPath));
+            } catch (IOException e) {
+                System.out.println("Missing/invalid cat asset: " + catPath);
+                if (i == 1) {
+                    try {
+                        catImages[0] = ImageIO.read(new File("assets/cat_player.PNG"));
+                    } catch (IOException ignored) {
+                        catImages[0] = null;
+                    }
+                } else {
+                    catImages[i - 1] = null;
+                }
+            }
+        }
+
+        // Fallback to any available cat image so rendering still works.
+        catImage = catImages[localPlayerId - 1];
+        if (catImage == null) {
+            for (Image img : catImages) {
+                if (img != null) {
+                    catImage = img;
+                    break;
+                }
+            }
+        }
+    }
+
+    public void setLocalPlayerId(int localPlayerId) {
+        int sanitizedId = Math.max(1, Math.min(4, localPlayerId));
+        if (this.localPlayerId == sanitizedId) {
+            return;
+        }
+        this.localPlayerId = sanitizedId;
+        if (catImages[sanitizedId - 1] == null) {
+            loadAssets();
+        } else {
+            catImage = catImages[sanitizedId - 1];
         }
     }
 
@@ -37,8 +86,7 @@ public class SpriteRenderer {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // 1. Calculate the angle towards the mouse
-        double angle = Math.atan2(mouseY - cat.y, mouseX - cat.x);
+        double angle = 0;
 
         // 2. Move to the mouse position (The Paw Position)
         g2d.translate(mouseX, mouseY); 
@@ -56,6 +104,131 @@ public class SpriteRenderer {
         		-catHeight / 2, 
         		catWidth, 
         		catHeight, null);
+
+        g2d.dispose();
+    }
+
+    // Rendering for Multiplayer
+    public void drawCatForPlayer(Graphics g, int playerId, int catX, int catY, int targetX, int targetY) {
+        int sanitizedId = Math.max(1, Math.min(4, playerId));
+        Image playerCatImage = catImages[sanitizedId - 1];
+        if (playerCatImage == null) {
+            playerCatImage = catImage; // fallback image if specific player asset is missing
+            if (playerCatImage == null) return;
+        }
+
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Preserve the source aspect ratio to avoid stretching.
+        int srcW = Math.max(1, playerCatImage.getWidth(null));
+        int srcH = Math.max(1, playerCatImage.getHeight(null));
+        int targetLongEdge = 1500;
+        int catWidth;
+        int catHeight;
+        if (srcW >= srcH) {
+            catWidth = targetLongEdge;
+            catHeight = (int) Math.round(((double) srcH / srcW) * targetLongEdge);
+        } else {
+            catHeight = targetLongEdge;
+            catWidth = (int) Math.round(((double) srcW / srcH) * targetLongEdge);
+        }
+
+        // Per-player tuning: edit values inside each case block.
+        int anchorOffsetX = 0;
+        int anchorOffsetY = 0;
+        int pawPadding;
+        int pivotX;
+        int pivotY;
+        int drawX;
+        int drawY;
+
+        int bodyX = catX;
+        int bodyY = catY;
+        double angle;
+
+        switch (sanitizedId) {
+            case 1: // copied from milestone1
+                anchorOffsetX = 24;
+                anchorOffsetY = 0;
+                pawPadding = 150; 
+                bodyX = catX + anchorOffsetX;
+                bodyY = catY + anchorOffsetY;
+                angle = 0;
+                pivotX = targetX;
+                pivotY = targetY;
+                drawX = -catWidth + pawPadding;
+                drawY = -catHeight / 2;
+                break;
+            case 2:
+                anchorOffsetX = 0;
+                anchorOffsetY = 16;
+                bodyX = catX + anchorOffsetX;
+                bodyY = catY + anchorOffsetY;
+                angle = 0;
+                
+                pivotX = targetX;
+                pivotY = targetY;
+                
+          
+                pawPadding = 240; 
+                
+                drawX = -pawPadding; 
+                drawY = -catHeight + 170;
+                break;
+            case 3: // RIGHT WALL (Horizontal asset pointing left toward the pit)
+                anchorOffsetX = -24;
+                anchorOffsetY = 0;
+                bodyX = catX + anchorOffsetX;
+                bodyY = catY + anchorOffsetY;
+                angle = 0;
+  
+                pivotX = targetX;
+                pivotY = targetY;
+                pawPadding = 150; 
+                
+                drawX = -pawPadding; 
+                drawY = -catHeight / 2;
+                break;
+            case 4: // BOTTOM WALL (Vertical asset naturally pointing UP toward the pit)
+                anchorOffsetX = 0;
+                anchorOffsetY = -24;
+                bodyX = catX + anchorOffsetX;
+                bodyY = catY + anchorOffsetY;
+                
+                angle = 0;
+
+                
+                // 2. Lock the rotation pivot center right on your cursor target
+                pivotX = targetX;
+                pivotY = targetY;
+                
+                // 3. Since the paw is at the top of the PNG, we pull the image down slightly 
+                // past the cursor pivot so the mouse rests right on the pink paw pads.
+                pawPadding = 150; // Match your Case 3 padding size feel
+                
+                // 4. THE VERTICAL FLIP OF CASE 3 LOGIC:
+                // Horizontally center the thickness (width) of the arm asset over the cursor
+                drawX = -catWidth / 2; 
+                
+                // Vertically align the top edge of the drawing (the paw) to the cursor
+                drawY = -pawPadding; 
+                break;
+            default:
+                pawPadding = 150;
+                bodyX = catX;
+                bodyY = catY;
+                angle = Math.atan2(targetY - bodyY, targetX - bodyX);
+                pivotX = targetX;
+                pivotY = targetY;
+                drawX = -catWidth + pawPadding;
+                drawY = -170;
+                break;
+        }
+
+        g2d.translate(pivotX, pivotY);
+        g2d.rotate(angle);
+        g2d.drawImage(playerCatImage, drawX, drawY, catWidth, catHeight, null);
 
         g2d.dispose();
     }

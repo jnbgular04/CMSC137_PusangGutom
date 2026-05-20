@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class GameServer {
     private static final int PORT = 4444;
@@ -52,6 +53,7 @@ public class GameServer {
                 
                 System.out.println("Player " + playerId + " connected.");
                 lastActivityTime = System.currentTimeMillis();
+                broadcastLobbyState();
             }
 
             System.out.println("Lobby full. Waiting for HOST_START...");
@@ -139,6 +141,15 @@ public class GameServer {
         }
     }
 
+    private void broadcastLobbyState() {
+        List<Integer> sortedPlayers = new ArrayList<>(clients.keySet());
+        Collections.sort(sortedPlayers);
+        String csv = sortedPlayers.stream()
+            .map(String::valueOf)
+            .collect(Collectors.joining(","));
+        broadcast(NetworkProtocol.formatLobbyUpdate(csv));
+    }
+
     private class ClientHandler implements Runnable {
         private Socket socket;
         private int playerId;
@@ -180,6 +191,13 @@ public class GameServer {
                             int y = Integer.parseInt(tokens[3]);
                             processClick(playerId, x, y);
                             break;
+                        case NetworkProtocol.PAW_MOVE:
+                            int mx = Integer.parseInt(tokens[2]);
+                            int my = Integer.parseInt(tokens[3]);
+                            if (isGameStarted) {
+                                broadcast(NetworkProtocol.formatPawStretch(playerId, mx, my));
+                            }
+                            break;
                         case NetworkProtocol.DISCONNECT:
                             handleDisconnect();
                             return;
@@ -194,6 +212,7 @@ public class GameServer {
             clients.remove(playerId);
             isGameStarted = false;
             broadcast(NetworkProtocol.PLAYER_DISCONNECT);
+            broadcastLobbyState();
             System.out.println("Player " + playerId + " disconnected.");
         }
     }

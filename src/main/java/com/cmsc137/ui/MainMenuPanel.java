@@ -56,8 +56,8 @@ public class MainMenuPanel extends JPanel {
 	    // Multiplayer Button
 	    JButton multiPlayerButton = createButton("Multiplayer Game");
 	    multiPlayerButton.addActionListener(e -> {
-	        System.out.println("Start Game clicked!");
-	        // TODO: screenManager.showGame();
+	        System.out.println("Opening multiplayer lobby...");
+	        screenManager.showLobby();
 	    });
 	    gbc.gridy = 2;
 	    multiPlayerButton.setPreferredSize(new Dimension(300, 50));

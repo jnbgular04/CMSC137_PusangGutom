@@ -15,7 +15,7 @@ public class ClientConnection implements Runnable {
     private BufferedReader in;
     private boolean isConnected = false;
     
-    public int localPlayerID = -1;
+    private int localPlayerID = -1;
     private GameManager gameManager;
     private ScreenManager screenManager;
 
@@ -35,6 +35,10 @@ public class ClientConnection implements Runnable {
         } catch (IOException e) {
             System.out.println("Failed to connect to server: " + e.getMessage());
         }
+    }
+    
+    public int getLocalPlayerID() {
+        return this.localPlayerID;
     }
 
     public void sendClick(int x, int y) {

@@ -90,30 +90,98 @@ public class GameStage extends JPanel {
             spriteRenderer.drawCat(g, cat, targetX, targetY);
         }
         
-        
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 18));
         g.drawString("Time: " + timeLeft, 20, 35);
         drawScoreboard(g);
         
-        // temporary for now, will update once Graphics is implemented
+        // GAME OVER SCREEN
         if (gameManager.getIsGameOver()) {
-            g.setColor(new Color(0, 0, 0, 180)); // semi-transparent black overlay
+            // overlay
+            g.setColor(new Color(0, 0, 0, 200)); 
             g.fillRect(0, 0, getWidth(), getHeight());
 
-            g.setColor(Color.RED);
-            g.setFont(new Font("Arial", Font.BOLD, 72));
-            g.drawString("GAME OVER", 380, 320);
+            int localId = gameManager.getLocalPlayerId();
+            int[] connectedPlayers = gameManager.getConnectedPlayers();
+            int[] finalScores = gameManager.getMultiplayerScores();
+
+            // check who won
+            int winningScore = -1;
+            int winnerId = -1;
+            
+            if (isMultiplayer) {
+                // GET PLAYER ID OF WINNING PLAYER
+                for (int i = 0; i < connectedPlayers.length; i++) {
+                    int networkId = connectedPlayers[i];
+                    // Normalize ID to be 1-indexed (1-4)
+                    int pId = (networkId < 1) ? networkId + 1 : networkId;
+                    
+                    int scoreIdx = pId - 1;
+                    if (scoreIdx >= 0 && scoreIdx < finalScores.length) {
+                        int pScore = finalScores[scoreIdx];
+                        if (pScore > winningScore) {
+                            winningScore = pScore;
+                            winnerId = networkId; // Keep track of the original network ID
+                        }
+                    }
+                }
+            } else {
+                winningScore = cat.score;
+                winnerId = localId;
+            }
+
+            // RENDER IF WON OR NOT
+            g.setFont(new Font("Arial", Font.BOLD, 64));
+            if (isMultiplayer) {
+                if (localId == winnerId) {
+                    g.setColor(Color.GREEN);
+                    g.drawString("VICTORY!", 470, 180);
+                } else {
+                    g.setColor(Color.RED);
+                    g.drawString("GAME OVER", 440, 180);
+                }
+            } else {
+                g.setColor(Color.RED);
+                g.drawString("GAME OVER", 440, 180);
+            }
+
+            // RENDER THE STANDINGS
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 24));
+            g.drawString("Final Standings:", 545, 260);
+
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            if (isMultiplayer) {
+                for (int i = 0; i < connectedPlayers.length; i++) {
+                    int networkId = connectedPlayers[i];
+                    // Normalize to 1-indexed for matching color boundaries and strings
+                    int pId = (networkId < 1) ? networkId + 1 : networkId;
+                    
+                    int scoreIdx = Math.max(0, Math.min(finalScores.length - 1, pId - 1));
+                    int pScore = finalScores[scoreIdx];
+                    
+                    if (networkId == winnerId) {
+                        g.setColor(Color.YELLOW);
+                        g.drawString("🏆 Player " + pId + ": " + pScore + " (Winner)", 510, 310 + (i * 30));
+                    } else if (networkId == localId) {
+                        g.setColor(Color.CYAN);
+                        g.drawString("👉 Player " + pId + " (You): " + pScore, 510, 310 + (i * 30));
+                    } else {
+                        g.setColor(Color.LIGHT_GRAY);
+                        g.drawString("   Player " + pId + ": " + pScore, 510, 310 + (i * 30));
+                    }
+                }
+            } else {
+                g.setColor(Color.YELLOW);
+                g.drawString("Your Score: " + cat.score, 550, 310);
+            }
 
             g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 32));
-            g.drawString("Final Score: " + cat.score, 490, 400);
-
-            g.setFont(new Font("Arial", Font.PLAIN, 20));
-            g.drawString("Returning to menu...", 510, 450);
+            g.setFont(new Font("Arial", Font.PLAIN, 18));
+            int footerY = isMultiplayer ? 350 + (connectedPlayers.length * 30) : 380;
+            g.drawString("Returning to menu shortly...", 520, footerY);
         }
     }
-
     // repaints based on updates from GameStage
     public void update() {
         repaint(); 
@@ -235,14 +303,14 @@ public class GameStage extends JPanel {
         g.setFont(new Font("Arial", Font.BOLD, 16));
         for (int i = 0; i < connectedPlayers.length; i++) {
             int networkId = connectedPlayers[i];
-            // Normalize IDs to 1-indexed for the display layout
-            int playerId = (networkId < 1 && networkId >= 0) ? networkId + 1 : networkId;
+            // Normalize IDs to 1-indexed safely
+            int pId = (networkId < 1) ? networkId + 1 : networkId;
             
-            int colorIndex = Math.max(0, Math.min(scoreboardColors.length - 1, playerId - 1));
-            int scoreIndex = Math.max(0, Math.min(scores.length - 1, playerId - 1));
+            int colorIndex = Math.max(0, Math.min(scoreboardColors.length - 1, pId - 1));
+            int scoreIndex = Math.max(0, Math.min(scores.length - 1, pId - 1));
             
             g.setColor(scoreboardColors[colorIndex]);
-            g.drawString("Player " + playerId + ": " + scores[scoreIndex], panelX + 16, panelY + 56 + (i * 22));
+            g.drawString("Player " + pId + ": " + scores[scoreIndex], panelX + 16, panelY + 56 + (i * 22));
         }
     }
 }

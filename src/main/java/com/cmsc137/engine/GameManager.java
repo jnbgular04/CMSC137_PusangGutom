@@ -62,7 +62,7 @@ public class GameManager {
      */
     public void startGame() {
         this.score = 0;
-        this.timeLeftSeconds = 60; // 1-minute countdown
+        this.timeLeftSeconds = 10; // 1-minute countdown
         this.isGameOver = false;
         this.isGameActive = true;
         this.frameCounter = 0;
@@ -109,8 +109,10 @@ public class GameManager {
         }
         // Handle Post-Game "Session Result" Delay (5 seconds)
         else {
-            postGameTimerFrames++;
-            if (postGameTimerFrames >= (5 * FPS)) { // 5 seconds * 60 FPS
+        	postGameTimerFrames++;
+            if (isMultiplayerMode == false && postGameTimerFrames >= (5 * FPS)) { // 5 seconds * 60 FPS
+                endSessionAndReturnToMenu();
+            } else if (postGameTimerFrames >= (10 * FPS)) { // Fixed syntax error here
                 endSessionAndReturnToMenu();
             }
         }

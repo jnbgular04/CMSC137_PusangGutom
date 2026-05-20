@@ -8,6 +8,8 @@ import javax.swing.SwingUtilities;
 
 import com.cmsc137.entities.Mouse;
 import com.cmsc137.ui.ScreenManager;
+import com.cmsc137.entities.Cat;
+import com.cmsc137.network.ClientConnection;
 
 /**
  * GameManager tracks the score, current game state, and mouse spawning logic.
@@ -38,6 +40,7 @@ public class GameManager {
     
     // Entity Tracking
     private List<Mouse> activeMice;
+    private List<Cat> networkedCats;
 
     private int[] multiplayerScores = new int[4];
 
@@ -154,9 +157,22 @@ public class GameManager {
     public List<Mouse> getActiveMice() { return activeMice; }
 
     private boolean isMultiplayerMode = false;
+    private ClientConnection clientConnection;
+    
+    public boolean isMultiplayerMode() {
+    	return this.isMultiplayerMode;
+    }
 
     public void setMultiplayerMode(boolean active) {
         this.isMultiplayerMode = active;
+    }
+    
+    public ClientConnection getClientConnection() {
+    	return this.clientConnection;
+    }
+    
+    public void setClientConnection(ClientConnection cc) {
+    	this.clientConnection = cc;
     }
 
     // Networked State Mutators 
@@ -165,9 +181,15 @@ public class GameManager {
     }
 
     public void triggerNetworkedPawStretch(int playerId, int targetX, int targetY) {
-        // This requires Jaz to have a List<Cat> representing the 4 players in GameStage/GameManager.
-        // It updates the Cat model so SpriteRenderer.java knows where to draw the lerp.
-        // catList.get(playerId - 1).setAnimationTarget(targetX, targetY);
+        if(networkedCats == null || networkedCats.isEmpty()) return;
+        
+        Cat playerCat = networkedCats.get(playerId - 1);
+        
+        if (playerCat != null) {
+        	playerCat.animTargetX = targetX;
+        	playerCat.animTargetY = targetY;
+        	playerCat.isAnimating = true;
+        }
     }
 
     public void updateNetworkedScores(int[] scores) {

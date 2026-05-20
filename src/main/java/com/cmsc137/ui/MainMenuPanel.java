@@ -25,7 +25,6 @@ public class MainMenuPanel extends JPanel {
 	        backgroundImage = javax.imageio.ImageIO.read(
 	            new java.io.File("assets/Main_Menu_BG.png")
 	        );
-	        System.out.println("Loaded via file system!");
 	    } catch (Exception e) {
 	        e.printStackTrace();
 	    }

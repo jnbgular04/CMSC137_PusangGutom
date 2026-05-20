@@ -5,14 +5,19 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.Cursor;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.awt.Color;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -26,6 +31,10 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 public class LobbyPanel extends JPanel {
+    private java.awt.Image entryBgImage;
+    private java.awt.Image hostBgImage;
+    private java.awt.Image joinBgImage;
+
     private static final String ENTRY_VIEW = "ENTRY_VIEW";
     private static final String HOST_VIEW = "HOST_VIEW";
     private static final String JOIN_VIEW = "JOIN_VIEW";
@@ -52,7 +61,6 @@ public class LobbyPanel extends JPanel {
         this.joinPlayerSlots = new ArrayList<>();
 
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
         JPanel entryPanel = buildEntryPanel();
         JPanel hostPanel = buildHostPanel();
@@ -68,6 +76,34 @@ public class LobbyPanel extends JPanel {
         cardContainer.add(hostPanel, HOST_VIEW);
         cardContainer.add(joinPanel, JOIN_VIEW);
         add(cardContainer, BorderLayout.CENTER);
+    }
+
+    // custom styling
+    private JButton createButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 18));
+        button.setForeground(Color.WHITE);
+        button.setBackground(new Color(80, 80, 80));
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setPreferredSize(new Dimension(280, 45)); // Matched your custom lobby dimensions!
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                // Dim only if the button is currently active/interactive
+                if (button.isEnabled()) {
+                    button.setBackground(new Color(120, 120, 120));
+                }
+            }
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                if (button.isEnabled()) {
+                    button.setBackground(new Color(80, 80, 80));
+                }
+            }
+        });
+
+        return button;
     }
 
     public void resetLobby() {
@@ -103,41 +139,53 @@ public class LobbyPanel extends JPanel {
     }
 
     private JPanel buildEntryPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
+        try {
+            entryBgImage = javax.imageio.ImageIO.read(
+                new java.io.File("assets/LobbyPanelBG.png")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        JPanel panel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g); 
+                if (entryBgImage != null) {
+                    g.drawImage(entryBgImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel title = new JLabel("Multiplayer Lobby", SwingConstants.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 30));
-        gbc.gridy = 0;
-        panel.add(title, gbc);
-
-        JButton hostButton = new JButton("Host Game");
-        hostButton.setPreferredSize(new Dimension(280, 45));
+        JButton hostButton = createButton("Host Game");
         hostButton.addActionListener(e -> handleHostGame());
         gbc.gridy = 1;
         panel.add(hostButton, gbc);
 
         JLabel ipLabel = new JLabel("Join via IP Address");
         ipLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        ipLabel.setFont(new Font("Arial", Font.BOLD, 20));       
+        ipLabel.setForeground(Color.WHITE); 
         gbc.gridy = 2;
         panel.add(ipLabel, gbc);
-
+        
         JTextField ipField = new JTextField();
         ipField.setName("ipInputField");
         ipField.setPreferredSize(new Dimension(280, 35));
         gbc.gridy = 3;
         panel.add(ipField, gbc);
 
-        JButton joinButton = new JButton("Connect to Host");
-        joinButton.setPreferredSize(new Dimension(280, 45));
+        JButton joinButton = createButton("Connect to Host");
         joinButton.addActionListener(e -> handleJoinGame(ipField.getText().trim()));
         gbc.gridy = 4;
         panel.add(joinButton, gbc);
 
-        JButton backButton = new JButton("Back to Main Menu");
+        JButton backButton = createButton("Back to Main Menu");
         backButton.addActionListener(e -> screenManager.showMainMenu());
         gbc.gridy = 5;
         panel.add(backButton, gbc);
@@ -146,102 +194,225 @@ public class LobbyPanel extends JPanel {
     }
 
     private JPanel buildHostPanel() {
-        JPanel panel = buildLobbyStatePanel("Host Lobby");
-        Box body = (Box) panel.getComponent(1);
+        try {
+            hostBgImage = javax.imageio.ImageIO.read(
+                new java.io.File("assets/HostBG.png")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        JPanel panel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g); 
+                if (hostBgImage != null) {
+                    g.drawImage(hostBgImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+
+        Box body = new Box(BoxLayout.Y_AXIS);
+        body.setOpaque(false);
+
+        body.add(Box.createVerticalStrut(220));
+
+        // CREATE THE LOW-OPACITY GRAY CONTAINER
+        JPanel containerBox = new JPanel();
+        containerBox.setLayout(new BoxLayout(containerBox, BoxLayout.Y_AXIS));
+        containerBox.setOpaque(false); 
+        containerBox.setAlignmentX(CENTER_ALIGNMENT);   
+        containerBox.setMaximumSize(new Dimension(500, 300));
+        containerBox.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+     
+        containerBox = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+              
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+              
+                g2d.setColor(new Color(40, 40, 40, 140)); 
+                
+                
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2d.dispose();
+                super.paintComponent(g);
+            }
+        };
+
+        containerBox.setLayout(new BoxLayout(containerBox, BoxLayout.Y_AXIS));
+        containerBox.setOpaque(false);
+        containerBox.setAlignmentX(CENTER_ALIGNMENT);
+        containerBox.setMaximumSize(new Dimension(500, 280));
+        containerBox.setBorder(BorderFactory.createEmptyBorder(25, 20, 25, 20));
+
 
         JLabel ip = new JLabel("IP Address: ");
         ip.setName("hostIpLabel");
-        ip.setAlignmentX(LEFT_ALIGNMENT);
-        body.add(ip);
-        body.add(Box.createVerticalStrut(8));
+        ip.setFont(new Font("Arial", Font.BOLD, 30)); 
+        ip.setForeground(Color.WHITE);
+        ip.setAlignmentX(CENTER_ALIGNMENT); 
+        containerBox.add(ip); 
+        containerBox.add(Box.createVerticalStrut(8));
 
         JLabel status = new JLabel("Host status: waiting for players...");
         status.setName("hostStatusLabel");
-        status.setAlignmentX(LEFT_ALIGNMENT);
-        body.add(status);
-        body.add(Box.createVerticalStrut(12));
+        status.setFont(new Font("Arial", Font.BOLD, 16)); 
+        status.setForeground(Color.WHITE);
+        status.setAlignmentX(CENTER_ALIGNMENT); 
+        containerBox.add(status); 
+        containerBox.add(Box.createVerticalStrut(16)); 
 
         JLabel playersHeader = new JLabel("Connected Players");
-        playersHeader.setFont(new Font("Arial", Font.BOLD, 16));
-        playersHeader.setAlignmentX(LEFT_ALIGNMENT);
-        body.add(playersHeader);
-        body.add(Box.createVerticalStrut(8));
+        playersHeader.setFont(new Font("Arial", Font.BOLD, 20)); 
+        playersHeader.setForeground(Color.WHITE);
+        playersHeader.setAlignmentX(CENTER_ALIGNMENT); 
+        containerBox.add(playersHeader); 
+        containerBox.add(Box.createVerticalStrut(8));
 
         for (int i = 1; i <= 4; i++) {
             JLabel slot = new JLabel("Player " + i + ": waiting...");
-            slot.setAlignmentX(LEFT_ALIGNMENT);
+            slot.setFont(new Font("Arial", Font.BOLD, 16)); 
+            slot.setForeground(Color.WHITE); 
+            slot.setAlignmentX(CENTER_ALIGNMENT); 
             hostPlayerSlots.add(slot);
-            body.add(slot);
+            containerBox.add(slot); 
+            containerBox.add(Box.createVerticalStrut(4)); 
         }
 
-        JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton start = new JButton("Start Game");
+     
+        body.add(containerBox);
+        body.add(Box.createVerticalStrut(20)); 
+
+
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        controls.setOpaque(false); 
+        
+        JButton start = createButton("Start Game");
         start.setName("hostStartButton");
         start.setEnabled(false);
         start.addActionListener(e -> screenManager.sendHostStart());
         controls.add(start);
 
-        JButton leave = new JButton("Leave Lobby");
+        JButton leave = createButton("Leave Lobby");
         leave.addActionListener(e -> {
             screenManager.disconnectClient();
             resetLobby();
             screenManager.showMainMenu();
         });
         controls.add(leave);
-        body.add(Box.createVerticalStrut(16));
+        
+        controls.setAlignmentX(CENTER_ALIGNMENT); 
         body.add(controls);
+
+        body.add(Box.createVerticalGlue()); 
+        panel.add(body, BorderLayout.CENTER);
 
         return panel;
     }
 
     private JPanel buildJoinPanel() {
-        JPanel panel = buildLobbyStatePanel("Joined Lobby");
-        Box body = (Box) panel.getComponent(1);
-
-        JLabel status = new JLabel("Join status: disconnected");
-        status.setName("joinStatusLabel");
-        status.setAlignmentX(LEFT_ALIGNMENT);
-        body.add(status);
-        body.add(Box.createVerticalStrut(12));
-
-        JLabel playersHeader = new JLabel("Players in this lobby");
-        playersHeader.setFont(new Font("Arial", Font.BOLD, 16));
-        playersHeader.setAlignmentX(LEFT_ALIGNMENT);
-        body.add(playersHeader);
-        body.add(Box.createVerticalStrut(8));
-
-        for (int i = 1; i <= 4; i++) {
-            JLabel slot = new JLabel("Player " + i + ": waiting...");
-            slot.setAlignmentX(LEFT_ALIGNMENT);
-            joinPlayerSlots.add(slot);
-            body.add(slot);
+        try {
+            joinBgImage = javax.imageio.ImageIO.read(
+                new java.io.File("assets/JoinedBG.png")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        JButton leave = new JButton("Leave Lobby");
-        leave.setAlignmentX(LEFT_ALIGNMENT);
+        final java.awt.Image finalJoinBg = joinBgImage;
+        JPanel panel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g); 
+                if (finalJoinBg != null) {
+                    g.drawImage(finalJoinBg, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+
+        Box body = new Box(BoxLayout.Y_AXIS);
+        body.setOpaque(false);
+
+        // Aligns vertically with the host layout location
+        body.add(Box.createVerticalStrut(220));
+
+        // CREATE THE LOW-OPACITY GRAY CONTAINER (Identical to Host panel)
+        JPanel containerBox = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Matches the gray backdrop hue and opacity (140) of the host lobby box
+                g2d.setColor(new Color(40, 40, 40, 140)); 
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2d.dispose();
+                super.paintComponent(g);
+            }
+        };
+
+        containerBox.setLayout(new BoxLayout(containerBox, BoxLayout.Y_AXIS));
+        containerBox.setOpaque(false);
+        containerBox.setAlignmentX(CENTER_ALIGNMENT);
+        containerBox.setMaximumSize(new Dimension(500, 280));
+        containerBox.setBorder(BorderFactory.createEmptyBorder(25, 20, 25, 20));
+
+        // Join Status Label inside the translucent container
+        JLabel status = new JLabel("Join status: disconnected");
+        status.setName("joinStatusLabel");
+        status.setFont(new Font("Arial", Font.BOLD, 16)); // Thicker font applied
+        status.setForeground(Color.WHITE);
+        status.setAlignmentX(CENTER_ALIGNMENT);
+        containerBox.add(status);
+        containerBox.add(Box.createVerticalStrut(16));
+
+        // Subheader inside the translucent container
+        JLabel playersHeader = new JLabel("Players in this lobby");
+        playersHeader.setFont(new Font("Arial", Font.BOLD, 20)); // Thicker font applied
+        playersHeader.setForeground(Color.WHITE);
+        playersHeader.setAlignmentX(CENTER_ALIGNMENT);
+        containerBox.add(playersHeader);
+        containerBox.add(Box.createVerticalStrut(8));
+
+        // Dynamic player listings
+        for (int i = 1; i <= 4; i++) {
+            JLabel slot = new JLabel("Player " + i + ": waiting...");
+            slot.setFont(new Font("Arial", Font.BOLD, 16)); // Thicker font applied
+            slot.setForeground(Color.WHITE); // White text for cleaner contrast
+            slot.setAlignmentX(CENTER_ALIGNMENT);
+            joinPlayerSlots.add(slot);
+            containerBox.add(slot);
+            containerBox.add(Box.createVerticalStrut(4));
+        }
+
+        // Drop the completed layout card container directly into your master tracking flow
+        body.add(containerBox);
+        body.add(Box.createVerticalStrut(20));
+
+        // Clean footer controls panel matching the host flow layouts
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        controls.setOpaque(false);
+
+        JButton leave = createButton("Leave Lobby");
         leave.addActionListener(e -> {
             screenManager.disconnectClient();
             resetLobby();
             screenManager.showMainMenu();
         });
-        body.add(Box.createVerticalStrut(16));
-        body.add(leave);
+        controls.add(leave);
+        
+        controls.setAlignmentX(CENTER_ALIGNMENT);
+        body.add(controls);
 
-        return panel;
-    }
-
-    private JPanel buildLobbyStatePanel(String titleText) {
-        JPanel panel = new JPanel(new BorderLayout());
-        JLabel title = new JLabel(titleText, SwingConstants.LEFT);
-        title.setFont(new Font("Arial", Font.BOLD, 28));
-        panel.add(title, BorderLayout.NORTH);
-
-        Box body = new Box(BoxLayout.Y_AXIS);
-        body.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+        body.add(Box.createVerticalGlue());
         panel.add(body, BorderLayout.CENTER);
+
         return panel;
     }
-
+    
     private void handleHostGame() {
         isHostFlow = true;
         hostIpLabel.setText("IP Address: " + resolveLocalIpAddress());

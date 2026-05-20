@@ -29,6 +29,13 @@ public class MouseHandler extends MouseAdapter {
     	
     	int clickX = e.getX();
     	int clickY = e.getY();
+    	
+    	if(gameManager.isMultiplayerMode()) {
+    		System.out.println("MULTIPLAYER CLICK DETECTED: Sending X:" + clickX + " Y:" + clickY);
+    		gameManager.getClientConnection().sendClick(clickX, clickY);
+    		return;
+    	}
+    	
     	List<Mouse> activeMice = gameManager.getActiveMice();
     	
     	// Get ID from CollisionMath

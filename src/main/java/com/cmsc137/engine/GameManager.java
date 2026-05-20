@@ -38,6 +38,10 @@ public class GameManager {
     
     // Entity Tracking
     private List<Mouse> activeMice;
+
+    private int[] multiplayerScores = new int[4];
+
+    
     
     public GameManager(ScreenManager screenManager) {
         this.screenManager = screenManager;
@@ -66,6 +70,9 @@ public class GameManager {
      */
     public void tick() {
         if (!isGameActive) return;
+        
+        // Bypass local timer and spawning if multiplayer
+        if (isMultiplayerMode) return;
         
         frameCounter++;
         spawnTimerFrames++; 
@@ -145,4 +152,33 @@ public class GameManager {
     public int getTimeLeft() { return timeLeftSeconds; }
     public boolean getIsGameOver() { return isGameOver; }
     public List<Mouse> getActiveMice() { return activeMice; }
+
+    private boolean isMultiplayerMode = false;
+
+    public void setMultiplayerMode(boolean active) {
+        this.isMultiplayerMode = active;
+    }
+
+    // Networked State Mutators 
+    public void addNetworkedMouse(Mouse mouse) {
+        this.activeMice.add(mouse);
+    }
+
+    public void triggerNetworkedPawStretch(int playerId, int targetX, int targetY) {
+        // This requires Jaz to have a List<Cat> representing the 4 players in GameStage/GameManager.
+        // It updates the Cat model so SpriteRenderer.java knows where to draw the lerp.
+        // catList.get(playerId - 1).setAnimationTarget(targetX, targetY);
+    }
+
+    public void updateNetworkedScores(int[] scores) {
+        this.multiplayerScores = scores;
+    }
+
+    public void triggerNetworkedGameOver(int winnerId) {
+        this.isGameOver = true;
+        this.activeMice.clear();
+        System.out.println("Game Over! Player " + winnerId + " wins!");
+    }
+
+    
 }

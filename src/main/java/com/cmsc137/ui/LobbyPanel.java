@@ -30,6 +30,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import com.cmsc137.network.NetworkProtocol;
+
 public class LobbyPanel extends JPanel {
     private java.awt.Image entryBgImage;
     private java.awt.Image hostBgImage;
@@ -167,7 +169,7 @@ public class LobbyPanel extends JPanel {
         gbc.gridy = 1;
         panel.add(hostButton, gbc);
 
-        JLabel ipLabel = new JLabel("Join via IP Address");
+        JLabel ipLabel = new JLabel("Enter Room Code");
         ipLabel.setHorizontalAlignment(SwingConstants.CENTER);
         ipLabel.setFont(new Font("Arial", Font.BOLD, 20));       
         ipLabel.setForeground(Color.WHITE); 
@@ -415,7 +417,10 @@ public class LobbyPanel extends JPanel {
     
     private void handleHostGame() {
         isHostFlow = true;
-        hostIpLabel.setText("IP Address: " + resolveLocalIpAddress());
+        String rawIp = resolveLocalIpAddress();
+        String pseudoRoomCode = NetworkProtocol.ipToRoomCode(rawIp);
+
+        hostIpLabel.setText("Room Code: " + pseudoRoomCode); 
         hostStatusLabel.setText("Host status: starting server...");
         cardLayout.show(cardContainer, HOST_VIEW);
 
@@ -429,15 +434,26 @@ public class LobbyPanel extends JPanel {
         screenManager.connectClient("127.0.0.1");
     }
 
-    private void handleJoinGame(String ipAddress) {
-        if (ipAddress == null || ipAddress.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid host IP address.", "Invalid IP", JOptionPane.WARNING_MESSAGE);
+    private void handleJoinGame(String roomCode) {
+        if (roomCode == null || roomCode.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid Room Code.", "Invalid Code", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        
+        // Decode the pseudo-code back into a functional IP address
+        String decryptedIp = NetworkProtocol.roomCodeToIp(roomCode);
+        
+        if (decryptedIp == null) {
+            JOptionPane.showMessageDialog(this, "Invalid Room Code format.", "Connection Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         isHostFlow = false;
-        joinStatusLabel.setText("Join status: connecting to " + ipAddress + "...");
+        joinStatusLabel.setText("Join status: connecting to room " + roomCode + "...");
         cardLayout.show(cardContainer, JOIN_VIEW);
-        screenManager.connectClient(ipAddress);
+        
+        // Pass the real IP to your existing connection system
+        screenManager.connectClient(decryptedIp); 
     }
 
     private void updatePlayerSlots(List<JLabel> slots, int[] connectedPlayers) {

@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class GameServer {
     private static final int PORT = 4444;
-    private static final int WIN_THRESHOLD = 30;
+    private static final int WIN_THRESHOLD = 100;
     
     // The Pit Boundaries
     private static final int PIT_MIN_X = 200;

@@ -82,25 +82,53 @@ public class LobbyPanel extends JPanel {
 
     // custom styling
     private JButton createButton(String text) {
-        JButton button = new JButton(text);
+        // Custom subclass to cleanly paint anti-aliased rounded corners natively
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Set background color based on active/inactive component state
+                if (!isEnabled()) {
+                    g2.setColor(new Color(130, 130, 130, 120)); // Soft, semi-translucent gray for disabled state
+                } else {
+                    g2.setColor(getBackground());
+                }
+                
+                // Draw smooth rounded rectangular base bounds
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 22, 22);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+
+        // Style setup matching your custom layout constraints
         button.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         button.setForeground(Color.WHITE);
-        button.setBackground(new Color(80, 80, 80));
+        button.setBackground(new Color(68, 70, 74)); // Rich Dark Slate Charcoal (sampled from the tail stripes!)
         button.setFocusPainted(false);
         button.setBorderPainted(false);
-        button.setPreferredSize(new Dimension(280, 45)); // Matched your custom lobby dimensions!
+        button.setContentAreaFilled(false); // Overrides the standard platform box borders
+        button.setPreferredSize(new Dimension(280, 45)); // Retains explicit sizing constraints
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
+        // Refined Hover/Interact Lifecycle Listeners
         button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                // Dim only if the button is currently active/interactive
+                // Hover animation shifts palette only if interactive component flag permits
                 if (button.isEnabled()) {
-                    button.setBackground(new Color(120, 120, 120));
+                    button.setBackground(new Color(95, 98, 104)); // Lighter slate charcoal highlight
+                    button.setForeground(new Color(255, 248, 230)); // Warm pastel cream tint text on hover
                 }
             }
+            
+            @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
                 if (button.isEnabled()) {
-                    button.setBackground(new Color(80, 80, 80));
+                    button.setBackground(new Color(68, 70, 74)); // Resets cleanly back to primary brand color
+                    button.setForeground(Color.WHITE);
                 }
             }
         });

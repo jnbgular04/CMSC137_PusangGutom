@@ -4,9 +4,12 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -92,25 +95,40 @@ public class MainMenuPanel extends JPanel {
     }
     
     private JButton createButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
-        button.setForeground(Color.WHITE);
-        button.setBackground(new Color(80, 80, 80));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setPreferredSize(new Dimension(200, 50));
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		// Custom subclass to paint clean, anti-aliased rounded corners natively
+		JButton button = new JButton(text) {
+			@Override
+			protected void paintComponent(Graphics g) {
+				Graphics2D g2 = (Graphics2D) g.create();
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g2.setColor(getBackground());
+				// Draws a smooth rounded rectangle
+				g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
+				g2.dispose();
+				super.paintComponent(g);
+			}
+		};
 
-        // Hover effect
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                button.setBackground(new Color(120, 120, 120));
-            }
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                button.setBackground(new Color(80, 80, 80));
-            }
-        });
+		button.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
+		button.setForeground(Color.WHITE);
+		button.setBackground(new Color(90, 65, 55)); // Warm Dark Chocolate/Espresso
+		button.setFocusPainted(false);
+		button.setBorderPainted(false);
+		button.setContentAreaFilled(false); // Prevents default square background rendering
+		button.setPreferredSize(new Dimension(240, 50));
+		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        return button;
-    }
+		button.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent e) {
+				button.setBackground(new Color(135, 100, 85)); // Lighter warm brown
+				button.setForeground(new Color(255, 235, 220)); // Soft cream text on hover
+			}
+			public void mouseExited(java.awt.event.MouseEvent e) {
+				button.setBackground(new Color(90, 65, 55));
+				button.setForeground(Color.WHITE);
+			}
+		});
+
+		return button;
+	}
 }

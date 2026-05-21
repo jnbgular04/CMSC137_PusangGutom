@@ -116,6 +116,7 @@ public class GameServer {
         if (hitId != -1) {
             // Remove mouse
             activeMice.removeIf(m -> m.id == hitId);
+            broadcast(NetworkProtocol.formatRemoveMouse(hitId));
             
             // Increment score
             int newScore = scores.get(playerId) + 1;

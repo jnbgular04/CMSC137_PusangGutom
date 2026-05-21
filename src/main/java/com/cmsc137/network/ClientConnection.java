@@ -121,6 +121,11 @@ public class ClientConnection implements Runnable {
                 gameManager.addNetworkedMouse(new Mouse(mouseId, mX, mY));
                 break;
 
+            case NetworkProtocol.REMOVE_MOUSE:
+                int removeId = Integer.parseInt(tokens[1]);
+                gameManager.removeNetworkedMouse(removeId);
+                break;
+
             case NetworkProtocol.PAW_STRETCH:
                 int pId = Integer.parseInt(tokens[1]);
                 int tX = Integer.parseInt(tokens[2]);

@@ -7,6 +7,7 @@ public class NetworkProtocol {
     // Server -> Client
     public static final String ASSIGN_ID = "ASSIGN_ID";
     public static final String SPAWN_MOUSE = "SPAWN_MOUSE";
+    public static final String REMOVE_MOUSE = "REMOVE_MOUSE";
     public static final String SCORE_UPDATE = "SCORE_UPDATE";
     public static final String GAME_OVER = "GAME_OVER";
     public static final String PAW_STRETCH = "PAW_STRETCH";
@@ -26,6 +27,10 @@ public class NetworkProtocol {
     // Helper formatting methods
     public static String formatSpawnMouse(int mouseId, int x, int y) {
         return SPAWN_MOUSE + "," + mouseId + "," + x + "," + y;
+    }
+
+    public static String formatRemoveMouse(int mouseId) {
+        return REMOVE_MOUSE + "," + mouseId;
     }
 
     public static String formatClickEvent(int playerId, int x, int y) {

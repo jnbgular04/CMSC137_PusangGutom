@@ -255,6 +255,10 @@ public void setLocalPlayerId(int playerId) {
         this.activeMice.add(mouse);
     }
 
+    public void removeNetworkedMouse(int mouseId) {
+        this.activeMice.removeIf(m -> m.id == mouseId);
+    }
+
     public void triggerNetworkedPawStretch(int playerId, int targetX, int targetY) {
         int idx = playerId - 1;
         if (idx < 0 || idx >= 4) {

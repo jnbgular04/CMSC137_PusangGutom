@@ -16,7 +16,7 @@ public class Main {
         // Swing GUI updates should be run on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
             
-            JFrame mainFrame = new JFrame("Pusang Gutom - M1 Engine Test");
+            JFrame mainFrame = new JFrame("Pusang Gutom");
             mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             
             // STRICT DIMENSIONS: Setting the content pane ensures the internal 

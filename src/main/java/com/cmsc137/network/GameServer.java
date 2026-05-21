@@ -151,6 +151,24 @@ public class GameServer {
         broadcast(NetworkProtocol.formatLobbyUpdate(csv));
     }
 
+    public void shutdown() {
+        System.out.println("Shutting down GameServer...");
+        try {
+            for (ClientHandler handler : clients.values()) {
+                handler.close();
+            }
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+            isGameStarted = false;
+            clients.clear();
+            scores.clear();
+            activeMice.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private class ClientHandler implements Runnable {
         private Socket socket;
         private int playerId;
@@ -160,6 +178,26 @@ public class GameServer {
         public ClientHandler(Socket socket, int playerId) {
             this.socket = socket;
             this.playerId = playerId;
+            
+            // FIX: Initialize the streams immediately here!
+            // This ensures 'out' is never null when the server 
+            // broadcasts the lobby state a millisecond later.
+            try {
+                this.out = new PrintWriter(socket.getOutputStream(), true);
+                this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            } catch (IOException e) {
+                System.out.println("Failed to initialize streams for Player " + playerId);
+            }
+        }
+
+        public void close() {
+            try {
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         public void sendMessage(String msg) {
@@ -171,8 +209,7 @@ public class GameServer {
         @Override
         public void run() {
             try {
-                out = new PrintWriter(socket.getOutputStream(), true);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                // REMOVED: out and in are no longer initialized here.
 
                 // Initial handshake
                 sendMessage(NetworkProtocol.ASSIGN_ID + "," + playerId);
@@ -202,6 +239,14 @@ public class GameServer {
                         case NetworkProtocol.DISCONNECT:
                             handleDisconnect();
                             return;
+                        case NetworkProtocol.EXIT_TO_MENU: 
+                            if (playerId == 1) { 
+                                // Broadcast to all clients so they return to menu
+                                broadcast("EXIT_TO_MENU"); 
+                                // Shut down the server thread and free Port 4444
+                                shutdown(); 
+                            }
+                            break;
                     }
                 }
             } catch (IOException e) {

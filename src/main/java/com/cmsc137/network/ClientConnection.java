@@ -164,16 +164,19 @@ public class ClientConnection implements Runnable {
                     screenManager.onLobbyUpdate(connectedPlayers);
                 }
                 break;
+
+            case NetworkProtocol.EXIT_TO_MENU: 
+                if (screenManager != null) {
+                    screenManager.showMainMenu(); 
+                }
+                break;
         }
     }
 
-    // Add this temporarily to ClientConnection.java for quick testing
-    public static void main(String[] args) {
-        // Create a dummy GameManager and ScreenManager just so the parser doesn't crash
-        com.cmsc137.engine.GameManager dummyManager = new com.cmsc137.engine.GameManager(null);
-        ClientConnection testingClient = new ClientConnection(dummyManager, null);
-        
-        System.out.println("Testing Mode: Attempting to connect to localhost...");
-        testingClient.connect("127.0.0.1"); 
+    public void sendExitToMenu() {
+        // Only the host is allowed to kill the lobby
+        if (isConnected && localPlayerID == 1) {
+            out.println("EXIT_TO_MENU"); // Assuming this is defined in NetworkProtocol
+        }
     }
 }

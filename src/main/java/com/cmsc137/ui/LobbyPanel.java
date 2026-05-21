@@ -138,10 +138,18 @@ public class LobbyPanel extends JPanel {
 
     public void resetLobby() {
         isHostFlow = false;
-        ipInputField.setText("");
-        hostStatusLabel.setText("Host status: waiting for players...");
-        joinStatusLabel.setText("Join status: disconnected");
-        hostStartButton.setEnabled(false);
+        if (ipInputField != null) {
+            ipInputField.setText("");
+        }
+        if (hostStatusLabel != null) {
+            hostStatusLabel.setText("Host status: waiting for players...");
+        }
+        if (joinStatusLabel != null) {
+            joinStatusLabel.setText("Join status: disconnected");
+        }
+        if (hostStartButton != null) {
+            hostStartButton.setEnabled(false);
+        }
         updatePlayerSlots(hostPlayerSlots, new int[] {});
         updatePlayerSlots(joinPlayerSlots, new int[] {});
         cardLayout.show(cardContainer, ENTRY_VIEW);
@@ -459,7 +467,6 @@ public class LobbyPanel extends JPanel {
         }
 
         hostStatusLabel.setText("Host status: connecting to local server...");
-        screenManager.connectClient("127.0.0.1");
     }
 
     private void handleJoinGame(String roomCode) {

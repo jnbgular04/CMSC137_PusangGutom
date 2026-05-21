@@ -7,6 +7,7 @@ import java.util.Random;
 import javax.swing.SwingUtilities;
 
 import com.cmsc137.entities.Mouse;
+import com.cmsc137.network.ClientConnection;
 import com.cmsc137.ui.ScreenManager;
 import com.cmsc137.entities.Cat;
 import com.cmsc137.network.ClientConnection;
@@ -43,6 +44,13 @@ public class GameManager {
     private List<Cat> networkedCats;
 
     private int[] multiplayerScores = new int[4];
+    private int[] connectedPlayers = new int[] { 1 };
+    private ClientConnection clientConnection;
+    private int localPlayerId = 1;
+    private final int[] pawTargetX = new int[4];
+    private final int[] pawTargetY = new int[4];
+    private static final int PIT_CENTER_X = 600;
+    private static final int PIT_CENTER_Y = 320;
 
     
     
@@ -57,13 +65,18 @@ public class GameManager {
      */
     public void startGame() {
         this.score = 0;
-        this.timeLeftSeconds = 60; // 1-minute countdown
+        this.timeLeftSeconds = 10; // 1-minute countdown
         this.isGameOver = false;
         this.isGameActive = true;
         this.frameCounter = 0;
         this.postGameTimerFrames = 0;
         this.activeMice.clear();
         this.nextMouseId = 1;
+        this.multiplayerScores = new int[4];
+        resetPawTargets();
+        if (!isMultiplayerMode) {
+            this.connectedPlayers = new int[] { 1 };
+        }
         
         System.out.println("Game Started! 60 Seconds on the clock.");
     }
@@ -74,34 +87,35 @@ public class GameManager {
     public void tick() {
         if (!isGameActive) return;
         
-        // Bypass local timer and spawning if multiplayer
-        if (isMultiplayerMode) return;
-        
         frameCounter++;
-        spawnTimerFrames++; 
         
         // Handle active gameplay logic
         if (!isGameOver) {
-            // Countdown timer (Strictly 1 second)
+            // Countdown timer (same for singleplayer and multiplayer)
             if (frameCounter >= FPS) {
                 timeLeftSeconds--;
-                frameCounter = 0; 
+                frameCounter = 0;
                 
                 if (timeLeftSeconds <= 0) {
                     triggerGameOver();
                 }
             }
             
-            // Spawn timer (Faster rate!)
-            if (spawnTimerFrames >= (FPS / 2)) { // Spawns every 0.5 seconds
-                spawnMouse();
-                spawnTimerFrames = 0;
+            // Local spawn only — multiplayer mice come from the server
+            if (!isMultiplayerMode) {
+                spawnTimerFrames++;
+                if (spawnTimerFrames >= (FPS / 2)) { // Spawns every 0.5 seconds
+                    spawnMouse();
+                    spawnTimerFrames = 0;
+                }
             }
         }
         // Handle Post-Game "Session Result" Delay (5 seconds)
         else {
-            postGameTimerFrames++;
-            if (postGameTimerFrames >= (5 * FPS)) { // 5 seconds * 60 FPS
+        	postGameTimerFrames++;
+            if (isMultiplayerMode == false && postGameTimerFrames >= (5 * FPS)) { // 5 seconds * 60 FPS
+                endSessionAndReturnToMenu();
+            } else if (postGameTimerFrames >= (10 * FPS)) { // Fixed syntax error here
                 endSessionAndReturnToMenu();
             }
         }
@@ -155,6 +169,9 @@ public class GameManager {
     public int getTimeLeft() { return timeLeftSeconds; }
     public boolean getIsGameOver() { return isGameOver; }
     public List<Mouse> getActiveMice() { return activeMice; }
+    public int[] getMultiplayerScores() { return multiplayerScores.clone(); }
+    public int[] getConnectedPlayers() { return connectedPlayers.clone(); }
+    public int getLocalPlayerId() { return localPlayerId; }
 
     private boolean isMultiplayerMode = false;
     private ClientConnection clientConnection;
@@ -175,25 +192,81 @@ public class GameManager {
     	this.clientConnection = cc;
     }
 
+    public boolean isMultiplayerMode() {
+        return isMultiplayerMode;
+    }
+
+    public void setClientConnection(ClientConnection clientConnection) {
+        this.clientConnection = clientConnection;
+    }
+
+    public void setLocalPlayerId(int playerId) {
+        this.localPlayerId = Math.max(1, Math.min(4, playerId));
+    }
+
+    public void sendMultiplayerClick(int x, int y) {
+        if (isMultiplayerMode && clientConnection != null) {
+            clientConnection.sendClick(x, y);
+        }
+    }
+
+    /** Local paw follows cursor immediately; network sync is throttled in ClientConnection. */
+    public void updateLocalPawPosition(int x, int y) {
+        if (!isMultiplayerMode || isGameOver) {
+            return;
+        }
+        triggerNetworkedPawStretch(localPlayerId, x, y);
+        if (clientConnection != null) {
+            clientConnection.sendPawMove(x, y);
+        }
+    }
+
     // Networked State Mutators 
     public void addNetworkedMouse(Mouse mouse) {
         this.activeMice.add(mouse);
     }
 
     public void triggerNetworkedPawStretch(int playerId, int targetX, int targetY) {
-        if(networkedCats == null || networkedCats.isEmpty()) return;
-        
-        Cat playerCat = networkedCats.get(playerId - 1);
-        
-        if (playerCat != null) {
-        	playerCat.animTargetX = targetX;
-        	playerCat.animTargetY = targetY;
-        	playerCat.isAnimating = true;
+        int idx = playerId - 1;
+        if (idx < 0 || idx >= 4) {
+            return;
+        }
+        pawTargetX[idx] = targetX;
+        pawTargetY[idx] = targetY;
+
+        // Integration of animation logic from HEAD
+        if (networkedCats != null && !networkedCats.isEmpty()) {
+            Cat playerCat = networkedCats.get(playerId - 1);
+            if (playerCat != null) {
+                playerCat.animTargetX = targetX;
+                playerCat.animTargetY = targetY;
+                playerCat.isAnimating = true;
+            }
+        }
+    }
+
+    public int[] getPawTarget(int playerId) {
+        int idx = Math.max(0, Math.min(3, playerId - 1));
+        return new int[] { pawTargetX[idx], pawTargetY[idx] };
+    }
+
+    private void resetPawTargets() {
+        for (int i = 0; i < 4; i++) {
+            pawTargetX[i] = PIT_CENTER_X;
+            pawTargetY[i] = PIT_CENTER_Y;
         }
     }
 
     public void updateNetworkedScores(int[] scores) {
         this.multiplayerScores = scores;
+    }
+
+    public void updateConnectedPlayers(int[] players) {
+        if (players == null || players.length == 0) {
+            this.connectedPlayers = new int[] { 1 };
+            return;
+        }
+        this.connectedPlayers = players.clone();
     }
 
     public void triggerNetworkedGameOver(int winnerId) {

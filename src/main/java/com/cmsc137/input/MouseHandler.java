@@ -5,6 +5,7 @@ import com.cmsc137.entities.Mouse;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionEvent;
 import java.util.List;
 
 /**
@@ -29,13 +30,12 @@ public class MouseHandler extends MouseAdapter {
     	
     	int clickX = e.getX();
     	int clickY = e.getY();
-    	
-    	if(gameManager.isMultiplayerMode()) {
-    		System.out.println("MULTIPLAYER CLICK DETECTED: Sending X:" + clickX + " Y:" + clickY);
-    		gameManager.getClientConnection().sendClick(clickX, clickY);
-    		return;
-    	}
-    	
+        // Multiplayer uses server-authoritative hit/score resolution.
+        if (gameManager.isMultiplayerMode()) {
+            gameManager.updateLocalPawPosition(clickX, clickY);
+            gameManager.sendMultiplayerClick(clickX, clickY);
+            return;
+        }
     	List<Mouse> activeMice = gameManager.getActiveMice();
     	
     	// Get ID from CollisionMath
@@ -56,5 +56,20 @@ public class MouseHandler extends MouseAdapter {
     		
     		System.out.println("Hit registered on Mouse ID: " + hitMouseId);
     	}
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        if (gameManager.getIsGameOver()) {
+            return;
+        }
+        if (gameManager.isMultiplayerMode()) {
+            gameManager.updateLocalPawPosition(e.getX(), e.getY());
+        }
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        mouseMoved(e);
     }
 }

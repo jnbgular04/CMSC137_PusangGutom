@@ -25,7 +25,6 @@ public class MainMenuPanel extends JPanel {
 	        backgroundImage = javax.imageio.ImageIO.read(
 	            new java.io.File("assets/Main_Menu_BG.png")
 	        );
-	        System.out.println("Loaded via file system!");
 	    } catch (Exception e) {
 	        e.printStackTrace();
 	    }
@@ -56,8 +55,8 @@ public class MainMenuPanel extends JPanel {
 	    // Multiplayer Button
 	    JButton multiPlayerButton = createButton("Multiplayer Game");
 	    multiPlayerButton.addActionListener(e -> {
-	        System.out.println("Start Game clicked!");
-	        // TODO: screenManager.showGame();
+	        System.out.println("Opening multiplayer lobby...");
+	        screenManager.showLobby();
 	    });
 	    gbc.gridy = 2;
 	    multiPlayerButton.setPreferredSize(new Dimension(300, 50));

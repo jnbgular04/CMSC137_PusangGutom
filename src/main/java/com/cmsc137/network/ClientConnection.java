@@ -15,9 +15,11 @@ public class ClientConnection implements Runnable {
     private BufferedReader in;
     private boolean isConnected = false;
     
-    public int localPlayerID = -1;
+    private int localPlayerID = -1;
     private GameManager gameManager;
     private ScreenManager screenManager;
+    private long lastPawMoveSentMs = 0;
+    private static final long PAW_MOVE_INTERVAL_MS = 33; // ~30 updates/sec
 
     public ClientConnection(GameManager gameManager, ScreenManager screenManager) {
         this.gameManager = gameManager;
@@ -26,6 +28,9 @@ public class ClientConnection implements Runnable {
 
     public void connect(String ipAddress) {
         try {
+            if (isConnected) {
+                return;
+            }
             socket = new Socket(ipAddress, 4444);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -42,11 +47,41 @@ public class ClientConnection implements Runnable {
             out.println(NetworkProtocol.formatClickEvent(localPlayerID, x, y));
         }
     }
+
+    public void sendPawMove(int x, int y) {
+        if (!isConnected || localPlayerID == -1) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastPawMoveSentMs < PAW_MOVE_INTERVAL_MS) {
+            return;
+        }
+        lastPawMoveSentMs = now;
+        out.println(NetworkProtocol.formatPawMove(localPlayerID, x, y));
+    }
     
     public void sendHostStart() {
         if (isConnected && localPlayerID == 1) {
             out.println(NetworkProtocol.HOST_START);
         }
+    }
+
+    public void disconnect() {
+        try {
+            if (out != null && isConnected) {
+                out.println(NetworkProtocol.DISCONNECT);
+            }
+            isConnected = false;
+            localPlayerID = -1;
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    public int getLocalPlayerID() {
+        return localPlayerID;
     }
 
     @Override
@@ -70,6 +105,9 @@ public class ClientConnection implements Runnable {
             case NetworkProtocol.ASSIGN_ID:
                 localPlayerID = Integer.parseInt(tokens[1]);
                 System.out.println("Assigned Player ID: " + localPlayerID);
+                if (screenManager != null) {
+                    screenManager.onAssignedPlayerId(localPlayerID);
+                }
                 break;
 
             case NetworkProtocol.START_GAME:
@@ -107,7 +145,19 @@ public class ClientConnection implements Runnable {
                 
             case NetworkProtocol.PLAYER_DISCONNECT:
                 // Fallback to menu if someone drops
-                screenManager.showMainMenu();
+                if (screenManager != null) {
+                    screenManager.showMainMenu();
+                }
+                break;
+
+            case NetworkProtocol.LOBBY_UPDATE:
+                if (screenManager != null) {
+                    int[] connectedPlayers = new int[Math.max(0, tokens.length - 1)];
+                    for (int i = 1; i < tokens.length; i++) {
+                        connectedPlayers[i - 1] = Integer.parseInt(tokens[i]);
+                    }
+                    screenManager.onLobbyUpdate(connectedPlayers);
+                }
                 break;
         }
     }

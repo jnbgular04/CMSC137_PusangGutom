@@ -308,8 +308,19 @@ public class GameStage extends JPanel {
             
             int displayScore = scores[scoreIndex];
 
+            // NEW: Dynamically build the text string to append (You) for the local player instance
+            String scoreboardRowText = "Player " + pId;
+            if (gameManager.isMultiplayerMode() && networkId == gameManager.getLocalPlayerId()) {
+                scoreboardRowText += " (You)";
+            } else if (!gameManager.isMultiplayerMode()) {
+                // In singleplayer, you are always Player 1
+                scoreboardRowText += " (You)";
+            }
+            scoreboardRowText += ": " + displayScore;
+
+            // Render row text matching your defined brand identification color array index
             g.setColor(scoreboardColors[colorIndex]);
-            g.drawString("Player " + pId + ": " + displayScore, panelX + 16, panelY + 56 + (i * 22));
+            g.drawString(scoreboardRowText, panelX + 16, panelY + 56 + (i * 22));
         }
     }
 }

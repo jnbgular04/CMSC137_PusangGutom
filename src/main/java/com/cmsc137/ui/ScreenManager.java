@@ -64,7 +64,7 @@ public class ScreenManager {
     public void showMainMenu() {
         gameLoop.stop(); 
         
-        // NEW: Ensure we drop the client connection and kill the server process
+        //  Ensure we drop the client connection and kill the server process
         disconnectClient();
         stopLocalServer(); 
         
@@ -96,7 +96,7 @@ public class ScreenManager {
         System.out.println("STATE CHECK: View Swapped to -> " + GAME_VIEW);
 
         gameStagePanel.requestFocusInWindow();
-    } // FIXED: Added the missing closing bracket for showGame()
+    }
 
     public boolean startLocalServer() {
         if (localServerStarted) {
@@ -114,7 +114,7 @@ public class ScreenManager {
         clientConnection.connect("127.0.0.1");
 
         return true;
-    } // FIXED: Removed the messy, duplicate copy-paste lines right below this
+    }
 
     public void stopLocalServer() {
         if (currentServer != null) {

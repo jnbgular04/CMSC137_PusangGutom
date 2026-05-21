@@ -218,8 +218,6 @@ public class GameServer {
         @Override
         public void run() {
             try {
-                // REMOVED: out and in are no longer initialized here.
-
                 // Initial handshake
                 sendMessage(NetworkProtocol.ASSIGN_ID + "," + playerId);
 
@@ -256,9 +254,7 @@ public class GameServer {
                                 shutdown(); 
                             }
                             break;
-                        case "CHAT": // Matches NetworkProtocol.CHAT_MSG placeholder SST_Master Document.md]
-                            // The line format received from a client is: CHAT,playerId,message
-                            // We simply broadcast it instantly to all other players
+                        case "CHAT":
                             broadcast(line); 
                             break;
                     }

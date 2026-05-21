@@ -178,11 +178,10 @@ public class ClientConnection implements Runnable {
                 
             case NetworkProtocol.PLAYER_DISCONNECT:
                 if (gameManager != null && gameManager.getIsGameOver() == false) {
-                    // Check if your local loop has advanced past the lobby.
+                    // Check if local loop has advanced past the lobby.
                     // We can check if the screen manager is currently showing the GAME_VIEW.
                     // If we are still in the lobby, ignore this nuke command.
                     
-                    // Assuming you have a way to check if the game is actively running:
                     if (screenManager != null) {
                         System.out.println("A player disconnected mid-match! Dissolving active game room...");
                         screenManager.showMainMenu(); //

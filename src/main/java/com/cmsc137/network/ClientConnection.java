@@ -198,6 +198,16 @@ public class ClientConnection implements Runnable {
                     screenManager.showMainMenu(); 
                 }
                 break;
+            
+            case "CHAT":
+                int speakerId = Integer.parseInt(tokens[1]);
+                // Recombine tokens past index 1 just in case spaces were split
+                String chatBody = tokens[2]; 
+                
+                if (screenManager != null && screenManager.getLobbyPanel() != null) {
+                    screenManager.getLobbyPanel().appendChatMessage(speakerId, chatBody);
+                }
+                break;
         }
     }
 
@@ -206,5 +216,17 @@ public class ClientConnection implements Runnable {
         if (isConnected && localPlayerID == 1) {
             out.println("EXIT_TO_MENU"); // Assuming this is defined in NetworkProtocol
         }
+    }
+
+    public void sendChatMessage(String message) {
+        // Clean out commas from the message body so it doesn't break our token parsing arrays!
+        String sanitizedMessage = message.replace(",", " ");
+        if (isConnected && localPlayerID != -1) {
+            out.println("CHAT," + localPlayerID + "," + sanitizedMessage);
+        }
+    }
+
+    public void setLocalPlayerID(int id) {
+        this.localPlayerID = id;
     }
 }

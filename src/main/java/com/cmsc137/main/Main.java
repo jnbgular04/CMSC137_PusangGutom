@@ -19,7 +19,7 @@ public class Main {
             
             JFrame mainFrame = new JFrame("Pusang Gutom");
             
-            // FIX: Prevent native ungraceful crashing so our custom window listener can intercept the close event
+            // Prevent native ungraceful crashing so our custom window listener can intercept the close event
             mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
             
             // STRICT DIMENSIONS: Setting the content pane ensures the internal 
@@ -33,7 +33,7 @@ public class Main {
             
             ScreenManager screenManager = new ScreenManager(mainFrame);
             
-            // FIX: Catch the window close event to clean up socket architecture SST_Master Document.md]
+            // Catch the window close event to clean up socket architecture SST_Master Document.md]
             mainFrame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {

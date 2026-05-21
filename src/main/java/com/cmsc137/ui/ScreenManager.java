@@ -110,6 +110,7 @@ public class ScreenManager {
         serverThread.start();
 
         // Host needs to connect to their own server
+        this.clientConnection.setLocalPlayerID(1);
         clientConnection.connect("127.0.0.1");
 
         return true;
@@ -146,4 +147,12 @@ public class ScreenManager {
         lobbyPanel.onLobbyUpdated(connectedPlayers, clientConnection.getLocalPlayerID());
         gameManager.updateConnectedPlayers(connectedPlayers);
     }
-} // FIXED: Kept exactly one closing brace for the class
+
+    public ClientConnection getHelperClientConnection() { 
+        return this.clientConnection; 
+    }
+
+    public LobbyPanel getLobbyPanel() {
+        return this.lobbyPanel;
+    }
+}

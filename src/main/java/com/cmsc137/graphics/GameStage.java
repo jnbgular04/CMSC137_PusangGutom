@@ -21,7 +21,12 @@ public class GameStage extends JPanel {
     private SpriteRenderer spriteRenderer;
     private GameManager gameManager; 
     private Image backgroundImage;
-    private final Color[] scoreboardColors = { Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW };
+    private final Color[] scoreboardColors = { 
+        new Color(255, 179, 186), // Soft Pastel Pink/Red (P1)
+        new Color(186, 225, 255), // Soft Pastel Blue (P2)
+        new Color(186, 255, 201), // Soft Pastel Mint (P3)
+        new Color(255, 255, 186)  // Soft Pastel Lemon (P4)
+    };
 
     public GameStage(GameManager gameManager) { 
         this.gameManager = gameManager;

@@ -41,6 +41,10 @@ public class ClientConnection implements Runnable {
             System.out.println("Failed to connect to server: " + e.getMessage());
         }
     }
+    
+    public int getLocalPlayerID() {
+        return this.localPlayerID;
+    }
 
     public void sendClick(int x, int y) {
         if (isConnected && localPlayerID != -1) {

@@ -9,6 +9,8 @@ import javax.swing.SwingUtilities;
 import com.cmsc137.entities.Mouse;
 import com.cmsc137.network.ClientConnection;
 import com.cmsc137.ui.ScreenManager;
+import com.cmsc137.entities.Cat;
+import com.cmsc137.network.ClientConnection;
 
 /**
  * GameManager tracks the score, current game state, and mouse spawning logic.
@@ -39,6 +41,7 @@ public class GameManager {
     
     // Entity Tracking
     private List<Mouse> activeMice;
+    private List<Cat> networkedCats;
 
     private int[] multiplayerScores = new int[4];
     private int[] connectedPlayers = new int[] { 1 };
@@ -171,9 +174,22 @@ public class GameManager {
     public int getLocalPlayerId() { return localPlayerId; }
 
     private boolean isMultiplayerMode = false;
+    private ClientConnection clientConnection;
+    
+    public boolean isMultiplayerMode() {
+    	return this.isMultiplayerMode;
+    }
 
     public void setMultiplayerMode(boolean active) {
         this.isMultiplayerMode = active;
+    }
+    
+    public ClientConnection getClientConnection() {
+    	return this.clientConnection;
+    }
+    
+    public void setClientConnection(ClientConnection cc) {
+    	this.clientConnection = cc;
     }
 
     public boolean isMultiplayerMode() {
@@ -217,6 +233,16 @@ public class GameManager {
         }
         pawTargetX[idx] = targetX;
         pawTargetY[idx] = targetY;
+
+        // Integration of animation logic from HEAD
+        if (networkedCats != null && !networkedCats.isEmpty()) {
+            Cat playerCat = networkedCats.get(playerId - 1);
+            if (playerCat != null) {
+                playerCat.animTargetX = targetX;
+                playerCat.animTargetY = targetY;
+                playerCat.isAnimating = true;
+            }
+        }
     }
 
     public int[] getPawTarget(int playerId) {

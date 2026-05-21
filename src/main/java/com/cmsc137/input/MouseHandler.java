@@ -30,14 +30,12 @@ public class MouseHandler extends MouseAdapter {
     	
     	int clickX = e.getX();
     	int clickY = e.getY();
-
         // Multiplayer uses server-authoritative hit/score resolution.
         if (gameManager.isMultiplayerMode()) {
             gameManager.updateLocalPawPosition(clickX, clickY);
             gameManager.sendMultiplayerClick(clickX, clickY);
             return;
         }
-
     	List<Mouse> activeMice = gameManager.getActiveMice();
     	
     	// Get ID from CollisionMath

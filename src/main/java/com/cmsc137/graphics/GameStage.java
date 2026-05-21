@@ -82,7 +82,7 @@ public class GameStage extends JPanel {
         }
         
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         g.drawString("Time: " + timeLeft, 20, 35);
         drawScoreboard(g);
         
@@ -123,7 +123,7 @@ public class GameStage extends JPanel {
                 winnerId = localId;
             }
 
-            g.setFont(new Font("Arial", Font.BOLD, 64));
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 64));
             if (gameManager.isMultiplayerMode()) {
                 if (localId == winnerId) {
                     g.setColor(Color.GREEN);
@@ -138,10 +138,10 @@ public class GameStage extends JPanel {
             }
 
             g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 24));
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 24));
             g.drawString("Final Standings:", 545, 260);
 
-            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 20));
             if (gameManager.isMultiplayerMode()) {
                 for (int i = 0; i < connectedPlayers.length; i++) {
                     int networkId = connectedPlayers[i];
@@ -153,13 +153,13 @@ public class GameStage extends JPanel {
                     // FIXED IDENTITY CLAUSES FOR THE LAST ENTRIES
                     if (networkId == winnerId) {
                         g.setColor(Color.YELLOW);
-                        g.drawString("🏆 Player " + pId + ": " + pScore + " (Winner)", 510, 310 + (i * 30));
+                        g.drawString("Player " + pId + ": " + pScore + " (Winner)", 510, 310 + (i * 30));
                     } else if (networkId == localId || pId == localId) { 
                         g.setColor(Color.CYAN);
-                        g.drawString("👉 Player " + pId + " (You): " + pScore, 510, 310 + (i * 30));
+                        g.drawString("Player " + pId + " (You): " + pScore, 510, 310 + (i * 30));
                     } else {
                         g.setColor(Color.LIGHT_GRAY);
-                        g.drawString("   Player " + pId + ": " + pScore, 510, 310 + (i * 30));
+                        g.drawString("Player " + pId + ": " + pScore, 510, 310 + (i * 30));
                     }
                 }
             } else {
@@ -168,7 +168,7 @@ public class GameStage extends JPanel {
             }
 
             g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.PLAIN, 18));
+            g.setFont(new Font("Comic Sans MS", Font.PLAIN, 18));
             int footerY = gameManager.isMultiplayerMode() ? 350 + (connectedPlayers.length * 30) : 380;
             g.drawString("Returning to menu shortly...", 520, footerY);
         }
@@ -222,7 +222,7 @@ public class GameStage extends JPanel {
         g.fillRoundRect(panelX, panelY, panelW, panelH, 14, 14);
 
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         g.drawString("Scoreboard", panelX + 16, panelY + 28);
 
         int[] scores = gameManager.getMultiplayerScores();
@@ -234,7 +234,7 @@ public class GameStage extends JPanel {
             scores[0] = gameManager.getScore();
         }
 
-        g.setFont(new Font("Arial", Font.BOLD, 16));
+        g.setFont(new Font("Comic Sans MS", Font.BOLD, 16));
         for (int i = 0; i < connectedPlayers.length; i++) {
             int networkId = connectedPlayers[i];
             int pId = (networkId < 1) ? networkId + 1 : networkId;

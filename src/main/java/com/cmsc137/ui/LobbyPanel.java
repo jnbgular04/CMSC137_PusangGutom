@@ -83,7 +83,7 @@ public class LobbyPanel extends JPanel {
     // custom styling
     private JButton createButton(String text) {
         JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 18));
+        button.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         button.setForeground(Color.WHITE);
         button.setBackground(new Color(80, 80, 80));
         button.setFocusPainted(false);
@@ -171,7 +171,7 @@ public class LobbyPanel extends JPanel {
 
         JLabel ipLabel = new JLabel("Enter Room Code");
         ipLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        ipLabel.setFont(new Font("Arial", Font.BOLD, 20));       
+        ipLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 20));       
         ipLabel.setForeground(Color.WHITE); 
         gbc.gridy = 2;
         panel.add(ipLabel, gbc);
@@ -253,7 +253,7 @@ public class LobbyPanel extends JPanel {
 
         JLabel ip = new JLabel("IP Address: ");
         ip.setName("hostIpLabel");
-        ip.setFont(new Font("Arial", Font.BOLD, 30)); 
+        ip.setFont(new Font("Comic Sans MS", Font.BOLD, 30)); 
         ip.setForeground(Color.WHITE);
         ip.setAlignmentX(CENTER_ALIGNMENT); 
         containerBox.add(ip); 
@@ -261,14 +261,14 @@ public class LobbyPanel extends JPanel {
 
         JLabel status = new JLabel("Host status: waiting for players...");
         status.setName("hostStatusLabel");
-        status.setFont(new Font("Arial", Font.BOLD, 16)); 
+        status.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); 
         status.setForeground(Color.WHITE);
         status.setAlignmentX(CENTER_ALIGNMENT); 
         containerBox.add(status); 
         containerBox.add(Box.createVerticalStrut(16)); 
 
         JLabel playersHeader = new JLabel("Connected Players");
-        playersHeader.setFont(new Font("Arial", Font.BOLD, 20)); 
+        playersHeader.setFont(new Font("Comic Sans MS", Font.BOLD, 20)); 
         playersHeader.setForeground(Color.WHITE);
         playersHeader.setAlignmentX(CENTER_ALIGNMENT); 
         containerBox.add(playersHeader); 
@@ -276,7 +276,7 @@ public class LobbyPanel extends JPanel {
 
         for (int i = 1; i <= 4; i++) {
             JLabel slot = new JLabel("Player " + i + ": waiting...");
-            slot.setFont(new Font("Arial", Font.BOLD, 16)); 
+            slot.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); 
             slot.setForeground(Color.WHITE); 
             slot.setAlignmentX(CENTER_ALIGNMENT); 
             hostPlayerSlots.add(slot);
@@ -365,7 +365,7 @@ public class LobbyPanel extends JPanel {
         // Join Status Label inside the translucent container
         JLabel status = new JLabel("Join status: disconnected");
         status.setName("joinStatusLabel");
-        status.setFont(new Font("Arial", Font.BOLD, 16)); // Thicker font applied
+        status.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); // Thicker font applied
         status.setForeground(Color.WHITE);
         status.setAlignmentX(CENTER_ALIGNMENT);
         containerBox.add(status);
@@ -373,7 +373,7 @@ public class LobbyPanel extends JPanel {
 
         // Subheader inside the translucent container
         JLabel playersHeader = new JLabel("Players in this lobby");
-        playersHeader.setFont(new Font("Arial", Font.BOLD, 20)); // Thicker font applied
+        playersHeader.setFont(new Font("Comic Sans MS", Font.BOLD, 20)); // Thicker font applied
         playersHeader.setForeground(Color.WHITE);
         playersHeader.setAlignmentX(CENTER_ALIGNMENT);
         containerBox.add(playersHeader);
@@ -382,7 +382,7 @@ public class LobbyPanel extends JPanel {
         // Dynamic player listings
         for (int i = 1; i <= 4; i++) {
             JLabel slot = new JLabel("Player " + i + ": waiting...");
-            slot.setFont(new Font("Arial", Font.BOLD, 16)); // Thicker font applied
+            slot.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); // Thicker font applied
             slot.setForeground(Color.WHITE); // White text for cleaner contrast
             slot.setAlignmentX(CENTER_ALIGNMENT);
             joinPlayerSlots.add(slot);

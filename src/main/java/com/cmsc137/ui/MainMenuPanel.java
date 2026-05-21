@@ -93,7 +93,7 @@ public class MainMenuPanel extends JPanel {
     
     private JButton createButton(String text) {
         JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 18));
+        button.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         button.setForeground(Color.WHITE);
         button.setBackground(new Color(80, 80, 80));
         button.setFocusPainted(false);

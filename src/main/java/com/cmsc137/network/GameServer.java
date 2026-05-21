@@ -68,12 +68,18 @@ public class GameServer {
             while (true) {
                 try {
                     Thread.sleep(10000); // Check every 10 seconds
+                    
+                    // If no one is connected and the server has been idle for a minute
                     if (clients.isEmpty() && (System.currentTimeMillis() - lastActivityTime > 60000)) {
-                        System.out.println("Server idle for 60 seconds. Shutting down.");
-                        System.exit(0);
+                        System.out.println("Server idle for 60 seconds. Cleaning up and stopping server loop.");
+                        
+                        // FIX: Call your local shutdown method instead of killing the entire JVM
+                        shutdown(); 
+                        break; // Exit the heartbeat thread loop cleanly
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                    break;
                 }
             }
         }).start();
@@ -164,6 +170,9 @@ public class GameServer {
             clients.clear();
             scores.clear();
             activeMice.clear();
+        } catch (java.net.SocketException e) {
+            // Gracefully catch when shutdown() closes the socket while we are waiting
+            System.out.println("Server socket closed gracefully via shutdown/cleanup.");
         } catch (IOException e) {
             e.printStackTrace();
         }

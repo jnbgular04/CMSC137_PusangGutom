@@ -1,7 +1,6 @@
 package com.cmsc137.ui;
 
 import java.awt.CardLayout;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -23,17 +22,18 @@ public class ScreenManager {
 
     private JPanel mainMenuPanel;
     private LobbyPanel lobbyPanel;
-    private GameStage gameStagePanel;  // Use GameStage type, not JPanel
+    private GameStage gameStagePanel; 
 
-    // ADD THESE
     private GameManager gameManager;
     private GameLoop gameLoop;
     private ClientConnection clientConnection;
     private boolean localServerStarted = false;
+    
+    // FIXED: Added the missing field declaration for currentServer
+    private GameServer currentServer; 
 
     public ScreenManager(JFrame mainFrame) {
         this.mainFrame = mainFrame;
-
     
         this.gameManager = new GameManager(this);
         this.clientConnection = new ClientConnection(gameManager, this);
@@ -48,7 +48,7 @@ public class ScreenManager {
 
         mainMenuPanel = new MainMenuPanel(mainFrame, this);
         lobbyPanel = new LobbyPanel(this);
-        gameStagePanel = new GameStage(gameManager, false); 
+        gameStagePanel = new GameStage(gameManager); 
 
         this.gameLoop = new GameLoop(gameManager, gameStagePanel);
 
@@ -62,7 +62,12 @@ public class ScreenManager {
     }
 
     public void showMainMenu() {
-        gameLoop.stop(); // Stop the loop when returning to menu
+        gameLoop.stop(); 
+        
+        // NEW: Ensure we drop the client connection and kill the server process
+        disconnectClient();
+        stopLocalServer(); 
+        
         cardLayout.show(cardContainer, MENU_VIEW);
         System.out.println("STATE CHECK: View Swapped to -> " + MENU_VIEW);
     }
@@ -74,38 +79,49 @@ public class ScreenManager {
     }
 
     public void showGame(boolean isMultiplayer) {
-        if (!isMultiplayer) {
+        gameManager.setMultiplayerMode(isMultiplayer);
+        if (!gameManager.isMultiplayerMode()) {
             System.out.println("Starting Singleplayer Game Mode...");
             gameManager.setLocalPlayerId(1);
-            gameManager.setMultiplayerMode(false);
             gameStagePanel.setLocalPlayerId(gameManager.getLocalPlayerId());
-            gameStagePanel.setMultiplayerMode(false);
-            gameManager.startGame(); // Reset and start game state
-            gameLoop.start();        // Begin the 60FPS tick loop
+            gameManager.startGame(); 
+            gameLoop.start();        
         } else {
             System.out.println("Starting Multiplayer Game Mode (Milestone 2)...");
-            gameManager.setMultiplayerMode(true);
             gameStagePanel.setLocalPlayerId(gameManager.getLocalPlayerId());
-            gameStagePanel.setMultiplayerMode(true);
             gameManager.startGame();
             gameLoop.start();
         }
-
         cardLayout.show(cardContainer, GAME_VIEW);
         System.out.println("STATE CHECK: View Swapped to -> " + GAME_VIEW);
 
         gameStagePanel.requestFocusInWindow();
-    }
+    } // FIXED: Added the missing closing bracket for showGame()
 
     public boolean startLocalServer() {
         if (localServerStarted) {
             return false;
         }
         localServerStarted = true;
-        Thread serverThread = new Thread(() -> new GameServer().start(), "LocalGameServer");
+
+        currentServer = new GameServer();
+        Thread serverThread = new Thread(currentServer::start, "LocalGameServer");
         serverThread.setDaemon(true);
         serverThread.start();
+
+        // Host needs to connect to their own server
+        clientConnection.connect("127.0.0.1");
+
         return true;
+    } // FIXED: Removed the messy, duplicate copy-paste lines right below this
+
+    public void stopLocalServer() {
+        if (currentServer != null) {
+            currentServer.shutdown();
+            currentServer = null;
+        }
+        localServerStarted = false;
+        System.out.println("Local server stopped and flag reset.");
     }
 
     public void connectClient(String ipAddress) {
@@ -130,4 +146,4 @@ public class ScreenManager {
         lobbyPanel.onLobbyUpdated(connectedPlayers, clientConnection.getLocalPlayerID());
         gameManager.updateConnectedPlayers(connectedPlayers);
     }
-}
+} // FIXED: Kept exactly one closing brace for the class

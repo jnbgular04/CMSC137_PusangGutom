@@ -30,6 +30,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import com.cmsc137.network.NetworkProtocol;
+
 public class LobbyPanel extends JPanel {
     private java.awt.Image entryBgImage;
     private java.awt.Image hostBgImage;
@@ -80,25 +82,53 @@ public class LobbyPanel extends JPanel {
 
     // custom styling
     private JButton createButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 18));
+        // Custom subclass to cleanly paint anti-aliased rounded corners natively
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Set background color based on active/inactive component state
+                if (!isEnabled()) {
+                    g2.setColor(new Color(130, 130, 130, 120)); // Soft, semi-translucent gray for disabled state
+                } else {
+                    g2.setColor(getBackground());
+                }
+                
+                // Draw smooth rounded rectangular base bounds
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 22, 22);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+
+        // Style setup matching your custom layout constraints
+        button.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         button.setForeground(Color.WHITE);
-        button.setBackground(new Color(80, 80, 80));
+        button.setBackground(new Color(68, 70, 74)); // Rich Dark Slate Charcoal (sampled from the tail stripes!)
         button.setFocusPainted(false);
         button.setBorderPainted(false);
-        button.setPreferredSize(new Dimension(280, 45)); // Matched your custom lobby dimensions!
+        button.setContentAreaFilled(false); // Overrides the standard platform box borders
+        button.setPreferredSize(new Dimension(280, 45)); // Retains explicit sizing constraints
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
+        // Refined Hover/Interact Lifecycle Listeners
         button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                // Dim only if the button is currently active/interactive
+                // Hover animation shifts palette only if interactive component flag permits
                 if (button.isEnabled()) {
-                    button.setBackground(new Color(120, 120, 120));
+                    button.setBackground(new Color(95, 98, 104)); // Lighter slate charcoal highlight
+                    button.setForeground(new Color(255, 248, 230)); // Warm pastel cream tint text on hover
                 }
             }
+            
+            @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
                 if (button.isEnabled()) {
-                    button.setBackground(new Color(80, 80, 80));
+                    button.setBackground(new Color(68, 70, 74)); // Resets cleanly back to primary brand color
+                    button.setForeground(Color.WHITE);
                 }
             }
         });
@@ -108,10 +138,18 @@ public class LobbyPanel extends JPanel {
 
     public void resetLobby() {
         isHostFlow = false;
-        ipInputField.setText("");
-        hostStatusLabel.setText("Host status: waiting for players...");
-        joinStatusLabel.setText("Join status: disconnected");
-        hostStartButton.setEnabled(false);
+        if (ipInputField != null) {
+            ipInputField.setText("");
+        }
+        if (hostStatusLabel != null) {
+            hostStatusLabel.setText("Host status: waiting for players...");
+        }
+        if (joinStatusLabel != null) {
+            joinStatusLabel.setText("Join status: disconnected");
+        }
+        if (hostStartButton != null) {
+            hostStartButton.setEnabled(false);
+        }
         updatePlayerSlots(hostPlayerSlots, new int[] {});
         updatePlayerSlots(joinPlayerSlots, new int[] {});
         cardLayout.show(cardContainer, ENTRY_VIEW);
@@ -167,9 +205,9 @@ public class LobbyPanel extends JPanel {
         gbc.gridy = 1;
         panel.add(hostButton, gbc);
 
-        JLabel ipLabel = new JLabel("Join via IP Address");
+        JLabel ipLabel = new JLabel("Enter Room Code");
         ipLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        ipLabel.setFont(new Font("Arial", Font.BOLD, 20));       
+        ipLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 20));       
         ipLabel.setForeground(Color.WHITE); 
         gbc.gridy = 2;
         panel.add(ipLabel, gbc);
@@ -251,7 +289,7 @@ public class LobbyPanel extends JPanel {
 
         JLabel ip = new JLabel("IP Address: ");
         ip.setName("hostIpLabel");
-        ip.setFont(new Font("Arial", Font.BOLD, 30)); 
+        ip.setFont(new Font("Comic Sans MS", Font.BOLD, 30)); 
         ip.setForeground(Color.WHITE);
         ip.setAlignmentX(CENTER_ALIGNMENT); 
         containerBox.add(ip); 
@@ -259,14 +297,14 @@ public class LobbyPanel extends JPanel {
 
         JLabel status = new JLabel("Host status: waiting for players...");
         status.setName("hostStatusLabel");
-        status.setFont(new Font("Arial", Font.BOLD, 16)); 
+        status.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); 
         status.setForeground(Color.WHITE);
         status.setAlignmentX(CENTER_ALIGNMENT); 
         containerBox.add(status); 
         containerBox.add(Box.createVerticalStrut(16)); 
 
         JLabel playersHeader = new JLabel("Connected Players");
-        playersHeader.setFont(new Font("Arial", Font.BOLD, 20)); 
+        playersHeader.setFont(new Font("Comic Sans MS", Font.BOLD, 20)); 
         playersHeader.setForeground(Color.WHITE);
         playersHeader.setAlignmentX(CENTER_ALIGNMENT); 
         containerBox.add(playersHeader); 
@@ -274,7 +312,7 @@ public class LobbyPanel extends JPanel {
 
         for (int i = 1; i <= 4; i++) {
             JLabel slot = new JLabel("Player " + i + ": waiting...");
-            slot.setFont(new Font("Arial", Font.BOLD, 16)); 
+            slot.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); 
             slot.setForeground(Color.WHITE); 
             slot.setAlignmentX(CENTER_ALIGNMENT); 
             hostPlayerSlots.add(slot);
@@ -363,7 +401,7 @@ public class LobbyPanel extends JPanel {
         // Join Status Label inside the translucent container
         JLabel status = new JLabel("Join status: disconnected");
         status.setName("joinStatusLabel");
-        status.setFont(new Font("Arial", Font.BOLD, 16)); // Thicker font applied
+        status.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); // Thicker font applied
         status.setForeground(Color.WHITE);
         status.setAlignmentX(CENTER_ALIGNMENT);
         containerBox.add(status);
@@ -371,7 +409,7 @@ public class LobbyPanel extends JPanel {
 
         // Subheader inside the translucent container
         JLabel playersHeader = new JLabel("Players in this lobby");
-        playersHeader.setFont(new Font("Arial", Font.BOLD, 20)); // Thicker font applied
+        playersHeader.setFont(new Font("Comic Sans MS", Font.BOLD, 20)); // Thicker font applied
         playersHeader.setForeground(Color.WHITE);
         playersHeader.setAlignmentX(CENTER_ALIGNMENT);
         containerBox.add(playersHeader);
@@ -380,7 +418,7 @@ public class LobbyPanel extends JPanel {
         // Dynamic player listings
         for (int i = 1; i <= 4; i++) {
             JLabel slot = new JLabel("Player " + i + ": waiting...");
-            slot.setFont(new Font("Arial", Font.BOLD, 16)); // Thicker font applied
+            slot.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); // Thicker font applied
             slot.setForeground(Color.WHITE); // White text for cleaner contrast
             slot.setAlignmentX(CENTER_ALIGNMENT);
             joinPlayerSlots.add(slot);
@@ -415,7 +453,10 @@ public class LobbyPanel extends JPanel {
     
     private void handleHostGame() {
         isHostFlow = true;
-        hostIpLabel.setText("IP Address: " + resolveLocalIpAddress());
+        String rawIp = resolveLocalIpAddress();
+        String pseudoRoomCode = NetworkProtocol.ipToRoomCode(rawIp);
+
+        hostIpLabel.setText("Room Code: " + pseudoRoomCode); 
         hostStatusLabel.setText("Host status: starting server...");
         cardLayout.show(cardContainer, HOST_VIEW);
 
@@ -426,18 +467,28 @@ public class LobbyPanel extends JPanel {
         }
 
         hostStatusLabel.setText("Host status: connecting to local server...");
-        screenManager.connectClient("127.0.0.1");
     }
 
-    private void handleJoinGame(String ipAddress) {
-        if (ipAddress == null || ipAddress.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid host IP address.", "Invalid IP", JOptionPane.WARNING_MESSAGE);
+    private void handleJoinGame(String roomCode) {
+        if (roomCode == null || roomCode.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid Room Code.", "Invalid Code", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        
+        // Decode the pseudo-code back into a functional IP address
+        String decryptedIp = NetworkProtocol.roomCodeToIp(roomCode);
+        
+        if (decryptedIp == null) {
+            JOptionPane.showMessageDialog(this, "Invalid Room Code format.", "Connection Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         isHostFlow = false;
-        joinStatusLabel.setText("Join status: connecting to " + ipAddress + "...");
+        joinStatusLabel.setText("Join status: connecting to room " + roomCode + "...");
         cardLayout.show(cardContainer, JOIN_VIEW);
-        screenManager.connectClient(ipAddress);
+        
+        // Pass the real IP to your existing connection system
+        screenManager.connectClient(decryptedIp); 
     }
 
     private void updatePlayerSlots(List<JLabel> slots, int[] connectedPlayers) {

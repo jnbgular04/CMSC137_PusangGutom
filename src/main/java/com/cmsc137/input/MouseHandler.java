@@ -5,7 +5,7 @@ import com.cmsc137.entities.Mouse;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.List;
 
 /**
@@ -30,9 +30,13 @@ public class MouseHandler extends MouseAdapter {
     	
     	int clickX = e.getX();
     	int clickY = e.getY();
+
         // Multiplayer uses server-authoritative hit/score resolution.
         if (gameManager.isMultiplayerMode()) {
-            gameManager.updateLocalPawPosition(clickX, clickY);
+            // VISUAL LOCK: Ignore clicks if already stretching
+            if (gameManager.isLocalCatAnimating()) {
+                return;
+            }
             gameManager.sendMultiplayerClick(clickX, clickY);
             return;
         }
@@ -63,8 +67,9 @@ public class MouseHandler extends MouseAdapter {
         if (gameManager.getIsGameOver()) {
             return;
         }
-        if (gameManager.isMultiplayerMode()) {
-            gameManager.updateLocalPawPosition(e.getX(), e.getY());
+        // Continuous tracking disabled in multiplayer to prevent flooding
+        if (!gameManager.isMultiplayerMode()) {
+            // Local singleplayer behavior (handled by GameStage.getMousePosition())
         }
     }
 

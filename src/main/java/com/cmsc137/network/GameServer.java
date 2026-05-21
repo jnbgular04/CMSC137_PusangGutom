@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class GameServer {
     private static final int PORT = 4444;
-    private static final int WIN_THRESHOLD = 30;
+    private static final int WIN_THRESHOLD = 100;
     
     // The Pit Boundaries
     private static final int PIT_MIN_X = 200;
@@ -68,12 +68,18 @@ public class GameServer {
             while (true) {
                 try {
                     Thread.sleep(10000); // Check every 10 seconds
+                    
+                    // If no one is connected and the server has been idle for a minute
                     if (clients.isEmpty() && (System.currentTimeMillis() - lastActivityTime > 60000)) {
-                        System.out.println("Server idle for 60 seconds. Shutting down.");
-                        System.exit(0);
+                        System.out.println("Server idle for 60 seconds. Cleaning up and stopping server loop.");
+                        
+                        // FIX: Call your local shutdown method instead of killing the entire JVM
+                        shutdown(); 
+                        break; // Exit the heartbeat thread loop cleanly
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                    break;
                 }
             }
         }).start();
@@ -116,6 +122,7 @@ public class GameServer {
         if (hitId != -1) {
             // Remove mouse
             activeMice.removeIf(m -> m.id == hitId);
+            broadcast(NetworkProtocol.formatRemoveMouse(hitId));
             
             // Increment score
             int newScore = scores.get(playerId) + 1;
@@ -150,6 +157,27 @@ public class GameServer {
         broadcast(NetworkProtocol.formatLobbyUpdate(csv));
     }
 
+    public void shutdown() {
+        System.out.println("Shutting down GameServer...");
+        try {
+            for (ClientHandler handler : clients.values()) {
+                handler.close();
+            }
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+            isGameStarted = false;
+            clients.clear();
+            scores.clear();
+            activeMice.clear();
+        } catch (java.net.SocketException e) {
+            // Gracefully catch when shutdown() closes the socket while we are waiting
+            System.out.println("Server socket closed gracefully via shutdown/cleanup.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private class ClientHandler implements Runnable {
         private Socket socket;
         private int playerId;
@@ -159,6 +187,26 @@ public class GameServer {
         public ClientHandler(Socket socket, int playerId) {
             this.socket = socket;
             this.playerId = playerId;
+            
+            // FIX: Initialize the streams immediately here!
+            // This ensures 'out' is never null when the server 
+            // broadcasts the lobby state a millisecond later.
+            try {
+                this.out = new PrintWriter(socket.getOutputStream(), true);
+                this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            } catch (IOException e) {
+                System.out.println("Failed to initialize streams for Player " + playerId);
+            }
+        }
+
+        public void close() {
+            try {
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         public void sendMessage(String msg) {
@@ -170,8 +218,7 @@ public class GameServer {
         @Override
         public void run() {
             try {
-                out = new PrintWriter(socket.getOutputStream(), true);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                // REMOVED: out and in are no longer initialized here.
 
                 // Initial handshake
                 sendMessage(NetworkProtocol.ASSIGN_ID + "," + playerId);
@@ -201,6 +248,14 @@ public class GameServer {
                         case NetworkProtocol.DISCONNECT:
                             handleDisconnect();
                             return;
+                        case NetworkProtocol.EXIT_TO_MENU: 
+                            if (playerId == 1) { 
+                                // Broadcast to all clients so they return to menu
+                                broadcast("EXIT_TO_MENU"); 
+                                // Shut down the server thread and free Port 4444
+                                shutdown(); 
+                            }
+                            break;
                     }
                 }
             } catch (IOException e) {

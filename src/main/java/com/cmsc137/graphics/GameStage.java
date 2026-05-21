@@ -21,12 +21,15 @@ public class GameStage extends JPanel {
     private SpriteRenderer spriteRenderer;
     private GameManager gameManager; 
     private Image backgroundImage;
-    private boolean isMultiplayer;
-    private final Color[] scoreboardColors = { Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW };
+    private final Color[] scoreboardColors = { 
+        new Color(255, 179, 186), // Soft Pastel Pink/Red (P1)
+        new Color(186, 225, 255), // Soft Pastel Blue (P2)
+        new Color(186, 255, 201), // Soft Pastel Mint (P3)
+        new Color(255, 255, 186)  // Soft Pastel Lemon (P4)
+    };
 
-    public GameStage(GameManager gameManager, boolean isMultiplayer) { 
+    public GameStage(GameManager gameManager) { 
         this.gameManager = gameManager;
-        this.isMultiplayer = isMultiplayer;
         
         backgroundImage = new ImageIcon("assets/Game_Stage_BG.png").getImage();
 
@@ -44,10 +47,6 @@ public class GameStage extends JPanel {
         cat.y = 360;
         cat.name = "Player";
         cat.score = 0;
-    }
-
-    public void setMultiplayerMode(boolean isMultiplayer) {
-        this.isMultiplayer = isMultiplayer;
     }
 
     public void setLocalPlayerId(int playerId) {
@@ -72,7 +71,7 @@ public class GameStage extends JPanel {
         
         int targetX = cat.x + 100;
         int targetY = cat.y;
-        if (!isMultiplayer) {
+        if (!gameManager.isMultiplayerMode()) {
             java.awt.Point cursorPos = getMousePosition();
             targetX = (cursorPos != null) ? cursorPos.x : targetX;
             targetY = (cursorPos != null) ? cursorPos.y : targetY;
@@ -81,20 +80,23 @@ public class GameStage extends JPanel {
         // get the mice from game manager
         List<Mouse> mice = gameManager.getActiveMice();
         spriteRenderer.drawMice(g, mice);
-        if (isMultiplayer) {
+        if (gameManager.isMultiplayerMode()) {
             drawMultiplayerCats(g);
         } else {
             spriteRenderer.drawCat(g, cat, targetX, targetY);
         }
         
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         g.drawString("Time: " + timeLeft, 20, 35);
         drawScoreboard(g);
         
-        // GAME OVER SCREEN OVERLAY
+        // ==========================================
+        // GAME OVER / VICTORY OVERLAY SCREEN UPGRADE
+        // ==========================================
         if (gameManager.getIsGameOver()) {
-            g.setColor(new Color(0, 0, 0, 200)); 
+            // Soft translucent warm espresso chocolate veil instead of cold black
+            g.setColor(new Color(44, 34, 30, 225)); 
             g.fillRect(0, 0, getWidth(), getHeight());
 
             int localId = gameManager.getLocalPlayerId();
@@ -108,75 +110,128 @@ public class GameStage extends JPanel {
                 finalScores = new int[4];
             }
 
-            // Unify winner extraction parameters
-            int winningScore = -1;
-            int winnerId = -1;
+            // 1. CALCULATE HIGHEST SCORE & IDENTIFY ALL WINNERS (TIE HANDLING)
+            int highestScore = -1;
+            java.util.List<Integer> winningPlayerIds = new java.util.ArrayList<>();
+
+            if (gameManager.isMultiplayerMode()) {
+                // Step A: Discover the peak score ceiling
+                for (int networkId : connectedPlayers) {
+                    int pId = (networkId < 1) ? networkId + 1 : networkId;
+                    int scoreIdx = Math.max(0, Math.min(finalScores.length - 1, pId - 1));
+                    int pScore = finalScores[scoreIdx];
+                    if (pScore > highestScore) {
+                        highestScore = pScore;
+                    }
+                }
+                // Step B: Collect all identities matching that highest value
+                for (int networkId : connectedPlayers) {
+                    int pId = (networkId < 1) ? networkId + 1 : networkId;
+                    int scoreIdx = Math.max(0, Math.min(finalScores.length - 1, pId - 1));
+                    if (finalScores[scoreIdx] == highestScore) {
+                        winningPlayerIds.add(networkId);
+                    }
+                }
+            } else {
+                highestScore = cat.score;
+                winningPlayerIds.add(localId);
+            }
+
+            boolean isTie = winningPlayerIds.size() > 1;
+            boolean amIWinner = winningPlayerIds.contains(localId);
+
+            // Get FontMetrics to calculate exact text widths dynamically
+            java.awt.FontMetrics metrics;
+            int screenWidth = getWidth();
+
+            // 2. DYNAMIC HEADER DRAWING (PERFECTLY CENTERED)
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 64));
+            metrics = g.getFontMetrics();
+            String headerText = "";
             
-            if (isMultiplayer) {
-                for (int i = 0; i < connectedPlayers.length; i++) {
-                    int networkId = connectedPlayers[i];
-                    int pId = (networkId < 1) ? networkId + 1 : networkId;
-                    
-                    int scoreIdx = Math.max(0, Math.min(finalScores.length - 1, pId - 1));
-                    int pScore = finalScores[scoreIdx];
-                    if (pScore > winningScore) {
-                        winningScore = pScore;
-                        winnerId = networkId; // Lock original network identity context
-                    }
-                }
-            } else {
-                winningScore = cat.score;
-                winnerId = localId;
-            }
-
-            g.setFont(new Font("Arial", Font.BOLD, 64));
-            if (isMultiplayer) {
-                if (localId == winnerId) {
-                    g.setColor(Color.GREEN);
-                    g.drawString("VICTORY!", 470, 180);
-                } else {
-                    g.setColor(Color.RED);
-                    g.drawString("GAME OVER", 440, 180);
-                }
-            } else {
-                g.setColor(Color.RED);
-                g.drawString("GAME OVER", 440, 180);
-            }
-
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 24));
-            g.drawString("Final Standings:", 545, 260);
-
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            if (isMultiplayer) {
-                for (int i = 0; i < connectedPlayers.length; i++) {
-                    int networkId = connectedPlayers[i];
-                    int pId = (networkId < 1) ? networkId + 1 : networkId;
-                    
-                    int scoreIdx = Math.max(0, Math.min(finalScores.length - 1, pId - 1));
-                    int pScore = finalScores[scoreIdx];
-                    
-                    // FIXED IDENTITY CLAUSES FOR THE LAST ENTRIES
-                    if (networkId == winnerId) {
-                        g.setColor(Color.YELLOW);
-                        g.drawString("🏆 Player " + pId + ": " + pScore + " (Winner)", 510, 310 + (i * 30));
-                    } else if (networkId == localId || pId == localId) { 
-                        g.setColor(Color.CYAN);
-                        g.drawString("👉 Player " + pId + " (You): " + pScore, 510, 310 + (i * 30));
+            if (gameManager.isMultiplayerMode()) {
+                if (isTie) {
+                    if (amIWinner) {
+                        g.setColor(new Color(255, 226, 153)); // Soft Lemon Pastel Yellow
+                        headerText = "IT'S A TIE WIN!";
                     } else {
-                        g.setColor(Color.LIGHT_GRAY);
-                        g.drawString("   Player " + pId + ": " + pScore, 510, 310 + (i * 30));
+                        g.setColor(new Color(240, 128, 128)); // Soft Pastel Coral Red
+                        headerText = "MATCH DRAW";
+                    }
+                } else {
+                    int soleWinnerId = winningPlayerIds.get(0);
+                    if (localId == soleWinnerId) {
+                        g.setColor(new Color(181, 234, 215)); // Gorgeous Pastel Mint Green
+                        headerText = "VICTORY!";
+                    } else {
+                        g.setColor(new Color(255, 154, 162)); // Soft Pastel Coral Pink
+                        headerText = "GAME OVER";
                     }
                 }
             } else {
-                g.setColor(Color.YELLOW);
-                g.drawString("Your Score: " + cat.score, 550, 310);
+                g.setColor(new Color(255, 154, 162)); // Singleplayer soft game over
+                headerText = "GAME OVER";
+            }
+            // Math: Screen Center minus half of the string's precise pixel width
+            g.drawString(headerText, (screenWidth - metrics.stringWidth(headerText)) / 2, 180);
+
+
+            // 3. STANDINGS HEADER (PERFECTLY CENTERED)
+            g.setColor(new Color(255, 248, 230)); // Soft warm cream text
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 26));
+            metrics = g.getFontMetrics();
+            String standingsTitle = "Final Standings:";
+            g.drawString(standingsTitle, (screenWidth - metrics.stringWidth(standingsTitle)) / 2, 260);
+
+
+            // 4. PLAYER ENTRY ITERATION LOOP (PERFECTLY CENTERED)
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 20));
+            metrics = g.getFontMetrics();
+            
+            if (gameManager.isMultiplayerMode()) {
+                for (int i = 0; i < connectedPlayers.length; i++) {
+                    int networkId = connectedPlayers[i];
+                    int pId = (networkId < 1) ? networkId + 1 : networkId;
+                    int scoreIdx = Math.max(0, Math.min(finalScores.length - 1, pId - 1));
+                    int pScore = finalScores[scoreIdx];
+                    
+                    int yPos = 310 + (i * 35); 
+                    boolean individualIsWinner = winningPlayerIds.contains(networkId);
+                    String rowText = "";
+
+                    if (individualIsWinner) {
+                        g.setColor(new Color(255, 215, 0)); // Bright Rich Gold
+                        if (networkId == localId) {
+                            rowText = "Player " + pId + " (You): " + pScore + " - Winner!";
+                        } else {
+                            rowText = "Player " + pId + ": " + pScore + " - Winner!";
+                        }
+                    } else if (networkId == localId) { 
+                        g.setColor(new Color(174, 214, 241)); // Clear Pastel Blue for local identification
+                        rowText = "Player " + pId + " (You): " + pScore;
+                    } else {
+                        g.setColor(new Color(200, 200, 200)); // Muted neutral gray for guest entries
+                        rowText = "Player " + pId + ": " + pScore;
+                    }
+                    
+                    // Math: Centers every individual player line entry dynamically based on its text content length
+                    g.drawString(rowText, (screenWidth - metrics.stringWidth(rowText)) / 2, yPos);
+                }
+            } else {
+                g.setColor(new Color(255, 226, 153));
+                String singlePlayerScoreText = "Your Final Score: " + cat.score;
+                g.drawString(singlePlayerScoreText, (screenWidth - metrics.stringWidth(singlePlayerScoreText)) / 2, 310);
             }
 
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.PLAIN, 18));
-            int footerY = isMultiplayer ? 350 + (connectedPlayers.length * 30) : 380;
-            g.drawString("Returning to menu shortly...", 520, footerY);
+
+            // 5. FOOTER SUBTEXT RUNTIME STATE (PERFECTLY CENTERED)
+            g.setColor(new Color(255, 248, 230, 180)); // Soft translucent cream subtext
+            g.setFont(new Font("Comic Sans MS", Font.PLAIN, 18));
+            metrics = g.getFontMetrics();
+            String footerText = "Returning to menu shortly...";
+            int footerY = gameManager.isMultiplayerMode() ? 330 + (connectedPlayers.length * 35) : 380;
+            
+            g.drawString(footerText, (screenWidth - metrics.stringWidth(footerText)) / 2, footerY);
         }
     }
 
@@ -185,83 +240,25 @@ public class GameStage extends JPanel {
     }
 
     private void drawMultiplayerCats(Graphics g) {
-        int[] connectedPlayers = gameManager.getConnectedPlayers();
-        int localId = gameManager.getLocalPlayerId();
-        java.awt.Point cursor = getMousePosition();
-        int fallbackX = getWidth() / 2;
-        int fallbackY = getHeight() / 2;
-
-        boolean[] positionFilled = new boolean[5];
-
-        int localSlot = 1;
-        for (int i = 0; i < connectedPlayers.length; i++) {
-            if (connectedPlayers[i] == localId) {
-                localSlot = i + 1; 
-                break;
-            }
-        }
-        if (localSlot > 4) localSlot = 1;
-
-        for (int i = 0; i < connectedPlayers.length; i++) {
-            int remotePlayerId = connectedPlayers[i];
-            if (remotePlayerId == localId) {
-                continue;
-            }
-
-            int assignedSlot = i + 1;
-            if (assignedSlot > 4) continue; 
-
-            drawPlayerCatForSlot(g, remotePlayerId, assignedSlot, cursor, fallbackX, fallbackY);
-            positionFilled[assignedSlot] = true;
-        }
-
-        drawPlayerCat(g, localId, cursor, fallbackX, fallbackY, new boolean[5]); 
-        positionFilled[localSlot] = true;
-    }
-    
-    private void drawPlayerCatForSlot(Graphics g, int playerId, int slotId, java.awt.Point cursor, int fallbackX, int fallbackY) {
-        int[] anchor = getMultiplayerCatAnchor(slotId); 
-        int[] paw = gameManager.getPawTarget(playerId); 
+        List<Cat> cats = gameManager.getNetworkedCats();
         
-        int targetX = paw[0];
-        int targetY = paw[1];
-
-        spriteRenderer.drawCatForPlayer(g, slotId, anchor[0], anchor[1], targetX, targetY);
+        for (Cat c : cats) {
+            // Only draw if the player is connected (based on IDs the server sent)
+            if (isPlayerConnected(c.id)) {
+                int targetX = c.getAnimatedX(c.animTargetX);
+                int targetY = c.getAnimatedY(c.animTargetY);
+                
+                spriteRenderer.drawCatForPlayer(g, c.id, c.x, c.y, targetX, targetY);
+            }
+        }
     }
 
-    private void drawPlayerCat(Graphics g, int playerId, java.awt.Point cursor,
-            int fallbackX, int fallbackY, boolean[] drawn) {
-        if (playerId < 1 || playerId > 4 || drawn[playerId]) {
-            return;
+    private boolean isPlayerConnected(int id) {
+        int[] connected = gameManager.getConnectedPlayers();
+        for (int p : connected) {
+            if (p == id) return true;
         }
-        drawn[playerId] = true;
-        int localId = gameManager.getLocalPlayerId();
-        int[] anchor = getMultiplayerCatAnchor(playerId);
-        int targetX;
-        int targetY;
-        if (playerId == localId) {
-            targetX = (cursor != null) ? cursor.x : fallbackX;
-            targetY = (cursor != null) ? cursor.y : fallbackY;
-        } else {
-            int[] paw = gameManager.getPawTarget(playerId);
-            targetX = paw[0];
-            targetY = paw[1];
-        }
-        spriteRenderer.drawCatForPlayer(g, playerId, anchor[0], anchor[1], targetX, targetY);
-    }
-
-    private int[] getMultiplayerCatAnchor(int playerId) {
-        switch (playerId) {
-            case 2:
-                return new int[] { getWidth() / 2, 220 }; 
-            case 3:
-                return new int[] { getWidth() - 80, getHeight() / 2 }; 
-            case 4:
-                return new int[] { getWidth() / 2, getHeight() - 90 }; 
-            case 1:
-            default:
-                return new int[] { 80, getHeight() / 2 };      
-        }
+        return false;
     }
 
     private void drawScoreboard(Graphics g) {
@@ -273,32 +270,32 @@ public class GameStage extends JPanel {
         if (connectedPlayers == null || connectedPlayers.length == 0) {
             connectedPlayers = new int[] { 1 };
         }
-        
+
         int playerCount = connectedPlayers.length;
-        if (!isMultiplayer) {
+        if (!gameManager.isMultiplayerMode()) {
             playerCount = 1;
             connectedPlayers = new int[] { 1 };
         }
-        
+
         int panelH = 62 + (playerCount * 22);
 
         g.setColor(new Color(0, 0, 0, 140));
         g.fillRoundRect(panelX, panelY, panelW, panelH, 14, 14);
 
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         g.drawString("Scoreboard", panelX + 16, panelY + 28);
 
         int[] scores = gameManager.getMultiplayerScores();
         if (scores == null || scores.length == 0) {
             scores = new int[4]; 
         }
-        
-        if (!isMultiplayer) {
+
+        if (!gameManager.isMultiplayerMode()) {
             scores[0] = gameManager.getScore();
         }
 
-        g.setFont(new Font("Arial", Font.BOLD, 16));
+        g.setFont(new Font("Comic Sans MS", Font.BOLD, 16));
         for (int i = 0; i < connectedPlayers.length; i++) {
             int networkId = connectedPlayers[i];
             int pId = (networkId < 1) ? networkId + 1 : networkId;
@@ -311,8 +308,19 @@ public class GameStage extends JPanel {
             
             int displayScore = scores[scoreIndex];
 
+            // NEW: Dynamically build the text string to append (You) for the local player instance
+            String scoreboardRowText = "Player " + pId;
+            if (gameManager.isMultiplayerMode() && networkId == gameManager.getLocalPlayerId()) {
+                scoreboardRowText += " (You)";
+            } else if (!gameManager.isMultiplayerMode()) {
+                // In singleplayer, you are always Player 1
+                scoreboardRowText += " (You)";
+            }
+            scoreboardRowText += ": " + displayScore;
+
+            // Render row text matching your defined brand identification color array index
             g.setColor(scoreboardColors[colorIndex]);
-            g.drawString("Player " + pId + ": " + displayScore, panelX + 16, panelY + 56 + (i * 22));
+            g.drawString(scoreboardRowText, panelX + 16, panelY + 56 + (i * 22));
         }
     }
 }

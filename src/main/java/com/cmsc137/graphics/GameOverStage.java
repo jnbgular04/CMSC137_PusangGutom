@@ -16,7 +16,7 @@ public class GameOverStage extends JPanel {
 
         // Title Section
         JLabel titleLabel = new JLabel("MATCH RESULTS", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        titleLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 48));
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(40, 0, 20, 0));
         add(titleLabel, BorderLayout.NORTH);
@@ -33,7 +33,7 @@ public class GameOverStage extends JPanel {
                 int[] scores = gameManager.getMultiplayerScores();
                 int localId = gameManager.getLocalPlayerId();
 
-                g2d.setFont(new Font("Arial", Font.BOLD, 22));
+                g2d.setFont(new Font("Comic Sans MS", Font.BOLD, 22));
                 for (int i = 0; i < players.length; i++) {
                     int pId = players[i];
                     int pScore = scores[Math.max(0, Math.min(scores.length - 1, pId - 1))];
@@ -57,7 +57,7 @@ public class GameOverStage extends JPanel {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 40, 0));
 
         returnButton = new JButton("Main Menu");
-        returnButton.setFont(new Font("Arial", Font.BOLD, 18));
+        returnButton.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
         returnButton.addActionListener(e -> {
             // Reset network states safely here
             layout.show(mainPanel, "MENU_SCREEN");

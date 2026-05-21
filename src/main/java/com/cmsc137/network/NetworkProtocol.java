@@ -7,6 +7,7 @@ public class NetworkProtocol {
     // Server -> Client
     public static final String ASSIGN_ID = "ASSIGN_ID";
     public static final String SPAWN_MOUSE = "SPAWN_MOUSE";
+    public static final String REMOVE_MOUSE = "REMOVE_MOUSE";
     public static final String SCORE_UPDATE = "SCORE_UPDATE";
     public static final String GAME_OVER = "GAME_OVER";
     public static final String PAW_STRETCH = "PAW_STRETCH";
@@ -26,6 +27,10 @@ public class NetworkProtocol {
     // Helper formatting methods
     public static String formatSpawnMouse(int mouseId, int x, int y) {
         return SPAWN_MOUSE + "," + mouseId + "," + x + "," + y;
+    }
+
+    public static String formatRemoveMouse(int mouseId) {
+        return REMOVE_MOUSE + "," + mouseId;
     }
 
     public static String formatClickEvent(int playerId, int x, int y) {
@@ -49,5 +54,46 @@ public class NetworkProtocol {
             return LOBBY_UPDATE;
         }
         return LOBBY_UPDATE + "," + playerListCsv;
+    }
+
+    /**
+     * Converts a standard IPv4 address (e.g., "192.168.1.45") into a short 6-8 character Room Code.
+     */
+    public static String ipToRoomCode(String ipAddress) {
+        try {
+            String[] parts = ipAddress.split("\\.");
+            if (parts.length != 4) return "INVALID";
+
+            // Convert the 4 IP octets into a single 32-bit long integer
+            long ipLong = (Long.parseLong(parts[0]) << 24)
+                        + (Long.parseLong(parts[1]) << 16)
+                        + (Long.parseLong(parts[2]) << 8)
+                        + Long.parseLong(parts[3]);
+
+            // Convert that massive number into a Base-36 alphanumeric string (0-9, A-Z)
+            return Long.toString(ipLong, 36).toUpperCase();
+        } catch (Exception e) {
+            return "INVALID";
+        }
+    }
+
+    /**
+     * Converts a Room Code back into a standard IPv4 address (e.g., "192.168.1.45").
+     */
+    public static String roomCodeToIp(String roomCode) {
+        try {
+            // Parse the Base-36 string back into a long integer
+            long ipLong = Long.parseLong(roomCode.trim().toLowerCase(), 36);
+
+            // Reconstruct the 4 IP octets using bit-shifting
+            long part1 = (ipLong >> 24) & 0xFF;
+            long part2 = (ipLong >> 16) & 0xFF;
+            long part3 = (ipLong >> 8) & 0xFF;
+            long part4 = ipLong & 0xFF;
+
+            return part1 + "." + part2 + "." + part3 + "." + part4;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -27,19 +27,47 @@ public class ClientConnection implements Runnable {
     }
 
     public void connect(String ipAddress) {
-        try {
-            if (isConnected) {
-                return;
-            }
-            socket = new Socket(ipAddress, 4444);
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            isConnected = true;
-            
-            new Thread(this).start(); // Start listening for server broadcasts
-        } catch (IOException e) {
-            System.out.println("Failed to connect to server: " + e.getMessage());
+        if (isConnected) {
+            return;
         }
+
+        // Run the blocking connection logic on a separate thread to prevent UI freezing
+        new Thread(() -> {
+            try {
+                // Initialize an unbound socket instance
+                socket = new java.net.Socket();
+                
+                // Set an explicit connection timeout limit (2000 milliseconds = 2 seconds)
+                socket.connect(new java.net.InetSocketAddress(ipAddress, 4444), 2000);
+                
+                out = new PrintWriter(socket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                isConnected = true;
+                
+                // Start listening loop for incoming server data broadcasts
+                new Thread(this, "ClientListenThread").start(); 
+                
+            } catch (IOException e) {
+                System.out.println("Failed to connect to server: " + e.getMessage());
+                isConnected = false;
+                
+                // Safely notify the user interface on the Event Dispatch Thread (EDT)
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    if (screenManager != null) {
+                        // Display a clean error popup alert dialog window
+                        javax.swing.JOptionPane.showMessageDialog(
+                            null, 
+                            "Could not reach the host room. Please check the Room Code and try again.", 
+                            "Connection Timeout", 
+                            javax.swing.JOptionPane.ERROR_MESSAGE
+                        );
+                        
+                        // Force the UI view state machine layout back to the entry menu
+                        screenManager.showMainMenu(); 
+                    }
+                });
+            }
+        }, "ClientConnectionThread").start();
     }
     
     public int getLocalPlayerID() {
@@ -84,10 +112,6 @@ public class ClientConnection implements Runnable {
         }
     }
 
-    public int getLocalPlayerID() {
-        return localPlayerID;
-    }
-
     @Override
     public void run() {
         try {
@@ -123,6 +147,11 @@ public class ClientConnection implements Runnable {
                 int mX = Integer.parseInt(tokens[2]);
                 int mY = Integer.parseInt(tokens[3]);
                 gameManager.addNetworkedMouse(new Mouse(mouseId, mX, mY));
+                break;
+
+            case NetworkProtocol.REMOVE_MOUSE:
+                int removeId = Integer.parseInt(tokens[1]);
+                gameManager.removeNetworkedMouse(removeId);
                 break;
 
             case NetworkProtocol.PAW_STRETCH:
@@ -163,16 +192,19 @@ public class ClientConnection implements Runnable {
                     screenManager.onLobbyUpdate(connectedPlayers);
                 }
                 break;
+
+            case NetworkProtocol.EXIT_TO_MENU: 
+                if (screenManager != null) {
+                    screenManager.showMainMenu(); 
+                }
+                break;
         }
     }
 
-    // Add this temporarily to ClientConnection.java for quick testing
-    public static void main(String[] args) {
-        // Create a dummy GameManager and ScreenManager just so the parser doesn't crash
-        com.cmsc137.engine.GameManager dummyManager = new com.cmsc137.engine.GameManager(null);
-        ClientConnection testingClient = new ClientConnection(dummyManager, null);
-        
-        System.out.println("Testing Mode: Attempting to connect to localhost...");
-        testingClient.connect("127.0.0.1"); 
+    public void sendExitToMenu() {
+        // Only the host is allowed to kill the lobby
+        if (isConnected && localPlayerID == 1) {
+            out.println("EXIT_TO_MENU"); // Assuming this is defined in NetworkProtocol
+        }
     }
 }

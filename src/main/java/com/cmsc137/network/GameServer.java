@@ -73,7 +73,7 @@ public class GameServer {
                     if (clients.isEmpty() && (System.currentTimeMillis() - lastActivityTime > 60000)) {
                         System.out.println("Server idle for 60 seconds. Cleaning up and stopping server loop.");
                         
-                        // FIX: Call your local shutdown method instead of killing the entire JVM
+                        // Call your local shutdown method instead of killing the entire JVM
                         shutdown(); 
                         break; // Exit the heartbeat thread loop cleanly
                     }
@@ -188,7 +188,7 @@ public class GameServer {
             this.socket = socket;
             this.playerId = playerId;
             
-            // FIX: Initialize the streams immediately here!
+            // Initialize the streams immediately here!
             // This ensures 'out' is never null when the server 
             // broadcasts the lobby state a millisecond later.
             try {
@@ -218,8 +218,6 @@ public class GameServer {
         @Override
         public void run() {
             try {
-                // REMOVED: out and in are no longer initialized here.
-
                 // Initial handshake
                 sendMessage(NetworkProtocol.ASSIGN_ID + "," + playerId);
 
@@ -255,6 +253,9 @@ public class GameServer {
                                 // Shut down the server thread and free Port 4444
                                 shutdown(); 
                             }
+                            break;
+                        case "CHAT":
+                            broadcast(line); 
                             break;
                     }
                 }

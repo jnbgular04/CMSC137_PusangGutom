@@ -177,9 +177,17 @@ public class ClientConnection implements Runnable {
                 break;
                 
             case NetworkProtocol.PLAYER_DISCONNECT:
-                // Fallback to menu if someone drops
-                if (screenManager != null) {
-                    screenManager.showMainMenu();
+                if (gameManager != null && gameManager.getIsGameOver() == false) {
+                    // Check if local loop has advanced past the lobby.
+                    // We can check if the screen manager is currently showing the GAME_VIEW.
+                    // If we are still in the lobby, ignore this nuke command.
+                    
+                    if (screenManager != null) {
+                        System.out.println("A player disconnected mid-match! Dissolving active game room...");
+                        screenManager.showMainMenu(); //
+                    }
+                } else {
+                    System.out.println("A player left the lobby. Staying in room, waiting for slot update...");
                 }
                 break;
 
@@ -198,6 +206,16 @@ public class ClientConnection implements Runnable {
                     screenManager.showMainMenu(); 
                 }
                 break;
+            
+            case "CHAT":
+                int speakerId = Integer.parseInt(tokens[1]);
+                // Recombine tokens past index 1 just in case spaces were split
+                String chatBody = tokens[2]; 
+                
+                if (screenManager != null && screenManager.getLobbyPanel() != null) {
+                    screenManager.getLobbyPanel().appendChatMessage(speakerId, chatBody);
+                }
+                break;
         }
     }
 
@@ -206,5 +224,17 @@ public class ClientConnection implements Runnable {
         if (isConnected && localPlayerID == 1) {
             out.println("EXIT_TO_MENU"); // Assuming this is defined in NetworkProtocol
         }
+    }
+
+    public void sendChatMessage(String message) {
+        // Clean out commas from the message body so it doesn't break our token parsing arrays!
+        String sanitizedMessage = message.replace(",", " ");
+        if (isConnected && localPlayerID != -1) {
+            out.println("CHAT," + localPlayerID + "," + sanitizedMessage);
+        }
+    }
+
+    public void setLocalPlayerID(int id) {
+        this.localPlayerID = id;
     }
 }

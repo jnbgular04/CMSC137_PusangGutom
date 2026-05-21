@@ -2,6 +2,8 @@ package com.cmsc137.ui;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -11,13 +13,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
-import java.awt.Cursor;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.awt.Color;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -50,6 +50,15 @@ public class LobbyPanel extends JPanel {
     private final JLabel joinStatusLabel;
     private final List<JLabel> hostPlayerSlots;
     private final List<JLabel> joinPlayerSlots;
+
+    // Host Chat Components
+    private javax.swing.JTextArea hostChatDisplay;
+    private JTextField hostChatInput;
+
+    // Guest Chat Components
+    private javax.swing.JTextArea joinChatDisplay;
+    private JTextField joinChatInput;
+
     private final JButton hostStartButton;
     private final JTextField ipInputField;
 
@@ -152,6 +161,10 @@ public class LobbyPanel extends JPanel {
         }
         updatePlayerSlots(hostPlayerSlots, new int[] {});
         updatePlayerSlots(joinPlayerSlots, new int[] {});
+
+        if (hostChatDisplay != null) hostChatDisplay.setText("");
+        if (joinChatDisplay != null) joinChatDisplay.setText("");
+
         cardLayout.show(cardContainer, ENTRY_VIEW);
     }
 
@@ -233,220 +246,148 @@ public class LobbyPanel extends JPanel {
 
     private JPanel buildHostPanel() {
         try {
-            hostBgImage = javax.imageio.ImageIO.read(
-                new java.io.File("assets/HostBG.png")
-            );
+            hostBgImage = javax.imageio.ImageIO.read(new java.io.File("assets/HostBG.png")); //
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); //
         }
         
-        JPanel panel = new JPanel(new BorderLayout()) {
+        JPanel panel = new JPanel(null) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g); 
                 if (hostBgImage != null) {
-                    g.drawImage(hostBgImage, 0, 0, getWidth(), getHeight(), this);
+                    g.drawImage(hostBgImage, 0, 0, getWidth(), getHeight(), this); //
                 }
             }
         };
 
-        Box body = new Box(BoxLayout.Y_AXIS);
-        body.setOpaque(false);
-
-        body.add(Box.createVerticalStrut(220));
-
-        // CREATE THE LOW-OPACITY GRAY CONTAINER
-        JPanel containerBox = new JPanel();
-        containerBox.setLayout(new BoxLayout(containerBox, BoxLayout.Y_AXIS));
-        containerBox.setOpaque(false); 
-        containerBox.setAlignmentX(CENTER_ALIGNMENT);   
-        containerBox.setMaximumSize(new Dimension(500, 300));
-        containerBox.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
-     
-        containerBox = new JPanel() {
+        // --- MIDDLE CONTAINER LOBBY BOX ---
+        JPanel containerBox = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
-              
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-              
-                g2d.setColor(new Color(40, 40, 40, 140)); 
-                
-                
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2d.setColor(new Color(40, 40, 40, 140)); //
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); //
                 g2d.dispose();
                 super.paintComponent(g);
             }
         };
+        containerBox.setLayout(new BoxLayout(containerBox, BoxLayout.Y_AXIS)); //
+        containerBox.setOpaque(false); //
+        containerBox.setBorder(BorderFactory.createEmptyBorder(25, 20, 25, 20)); //
 
-        containerBox.setLayout(new BoxLayout(containerBox, BoxLayout.Y_AXIS));
-        containerBox.setOpaque(false);
-        containerBox.setAlignmentX(CENTER_ALIGNMENT);
-        containerBox.setMaximumSize(new Dimension(500, 280));
-        containerBox.setBorder(BorderFactory.createEmptyBorder(25, 20, 25, 20));
+        JLabel ip = new JLabel("IP Address: "); ip.setName("hostIpLabel"); //
+        ip.setFont(new Font("Comic Sans MS", Font.BOLD, 30)); ip.setForeground(Color.WHITE); ip.setAlignmentX(CENTER_ALIGNMENT); //
+        containerBox.add(ip); containerBox.add(Box.createVerticalStrut(8)); //
 
+        JLabel status = new JLabel("Host status: waiting for players..."); status.setName("hostStatusLabel"); //
+        status.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); status.setForeground(Color.WHITE); status.setAlignmentX(CENTER_ALIGNMENT); //
+        containerBox.add(status); containerBox.add(Box.createVerticalStrut(16)); //
 
-        JLabel ip = new JLabel("IP Address: ");
-        ip.setName("hostIpLabel");
-        ip.setFont(new Font("Comic Sans MS", Font.BOLD, 30)); 
-        ip.setForeground(Color.WHITE);
-        ip.setAlignmentX(CENTER_ALIGNMENT); 
-        containerBox.add(ip); 
-        containerBox.add(Box.createVerticalStrut(8));
+        JLabel playersHeader = new JLabel("Connected Players"); //
+        playersHeader.setFont(new Font("Comic Sans MS", Font.BOLD, 20)); playersHeader.setForeground(Color.WHITE); playersHeader.setAlignmentX(CENTER_ALIGNMENT); //
+        containerBox.add(playersHeader); containerBox.add(Box.createVerticalStrut(8)); //
 
-        JLabel status = new JLabel("Host status: waiting for players...");
-        status.setName("hostStatusLabel");
-        status.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); 
-        status.setForeground(Color.WHITE);
-        status.setAlignmentX(CENTER_ALIGNMENT); 
-        containerBox.add(status); 
-        containerBox.add(Box.createVerticalStrut(16)); 
-
-        JLabel playersHeader = new JLabel("Connected Players");
-        playersHeader.setFont(new Font("Comic Sans MS", Font.BOLD, 20)); 
-        playersHeader.setForeground(Color.WHITE);
-        playersHeader.setAlignmentX(CENTER_ALIGNMENT); 
-        containerBox.add(playersHeader); 
-        containerBox.add(Box.createVerticalStrut(8));
-
-        for (int i = 1; i <= 4; i++) {
-            JLabel slot = new JLabel("Player " + i + ": waiting...");
-            slot.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); 
-            slot.setForeground(Color.WHITE); 
-            slot.setAlignmentX(CENTER_ALIGNMENT); 
-            hostPlayerSlots.add(slot);
-            containerBox.add(slot); 
-            containerBox.add(Box.createVerticalStrut(4)); 
+        for (int i = 1; i <= 4; i++) { //
+            JLabel slot = new JLabel("Player " + i + ": waiting..."); //
+            slot.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); slot.setForeground(Color.WHITE); slot.setAlignmentX(CENTER_ALIGNMENT); //
+            hostPlayerSlots.add(slot); containerBox.add(slot); containerBox.add(Box.createVerticalStrut(4)); //
         }
 
-     
-        body.add(containerBox);
-        body.add(Box.createVerticalStrut(20)); 
+        containerBox.setBounds(390, 200, 500, 280);
+        panel.add(containerBox);
 
-
-        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        controls.setOpaque(false); 
+        // --- CONTROL BUTTONS (FIXED HORIZONTAL WRAP GAP) ---
+        // FlowLayout needs a wider container bounding box so your two 280px buttons fit side-by-side!
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0)); 
+        controls.setOpaque(false); //
         
-        JButton start = createButton("Start Game");
-        start.setName("hostStartButton");
-        start.setEnabled(false);
-        start.addActionListener(e -> screenManager.sendHostStart());
-        controls.add(start);
+        JButton start = createButton("Start Game"); start.setName("hostStartButton"); start.setEnabled(false); //
+        start.addActionListener(e -> screenManager.sendHostStart()); controls.add(start); //
 
-        JButton leave = createButton("Leave Lobby");
-        leave.addActionListener(e -> {
-            screenManager.disconnectClient();
-            resetLobby();
-            screenManager.showMainMenu();
-        });
-        controls.add(leave);
+        JButton leave = createButton("Leave Lobby"); //
+        leave.addActionListener(e -> { screenManager.disconnectClient(); resetLobby(); screenManager.showMainMenu(); }); //
+        controls.add(leave); //
         
-        controls.setAlignmentX(CENTER_ALIGNMENT); 
-        body.add(controls);
+        // Expanded layout width to 600px, shifted left to 340 to stay perfectly centered
+        controls.setBounds(340, 565, 600, 60);
+        panel.add(controls);
 
-        body.add(Box.createVerticalGlue()); 
-        panel.add(body, BorderLayout.CENTER);
+        // --- FLOATING CHAT OVERLAY BOX (FIXED NARROW WIDTH) ---
+        JPanel chatWrapper = buildChatComponent(true);
+        // Width narrowed down to 260px, pushed right to 990 to look sleek and compact
+        chatWrapper.setBounds(995, 25, 260, 200);
+        panel.add(chatWrapper);
 
         return panel;
     }
 
     private JPanel buildJoinPanel() {
         try {
-            joinBgImage = javax.imageio.ImageIO.read(
-                new java.io.File("assets/JoinedBG.png")
-            );
+            joinBgImage = javax.imageio.ImageIO.read(new java.io.File("assets/JoinedBG.png")); //
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); //
         }
 
-        final java.awt.Image finalJoinBg = joinBgImage;
-        JPanel panel = new JPanel(new BorderLayout()) {
+        JPanel panel = new JPanel(null) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g); 
-                if (finalJoinBg != null) {
-                    g.drawImage(finalJoinBg, 0, 0, getWidth(), getHeight(), this);
+                if (joinBgImage != null) {
+                    g.drawImage(joinBgImage, 0, 0, getWidth(), getHeight(), this); //
                 }
             }
         };
 
-        Box body = new Box(BoxLayout.Y_AXIS);
-        body.setOpaque(false);
-
-        // Aligns vertically with the host layout location
-        body.add(Box.createVerticalStrut(220));
-
-        // CREATE THE LOW-OPACITY GRAY CONTAINER (Identical to Host panel)
+        // --- MIDDLE CONTAINER JOIN BOX ---
         JPanel containerBox = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                // Matches the gray backdrop hue and opacity (140) of the host lobby box
-                g2d.setColor(new Color(40, 40, 40, 140)); 
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2d.setColor(new Color(40, 40, 40, 140)); //
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); //
                 g2d.dispose();
                 super.paintComponent(g);
             }
         };
+        containerBox.setLayout(new BoxLayout(containerBox, BoxLayout.Y_AXIS)); //
+        containerBox.setOpaque(false); //
+        containerBox.setBorder(BorderFactory.createEmptyBorder(25, 20, 25, 20)); //
 
-        containerBox.setLayout(new BoxLayout(containerBox, BoxLayout.Y_AXIS));
-        containerBox.setOpaque(false);
-        containerBox.setAlignmentX(CENTER_ALIGNMENT);
-        containerBox.setMaximumSize(new Dimension(500, 280));
-        containerBox.setBorder(BorderFactory.createEmptyBorder(25, 20, 25, 20));
+        JLabel status = new JLabel("Join status: disconnected"); status.setName("joinStatusLabel"); //
+        status.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); status.setForeground(Color.WHITE); status.setAlignmentX(CENTER_ALIGNMENT); //
+        containerBox.add(status); containerBox.add(Box.createVerticalStrut(16)); //
 
-        // Join Status Label inside the translucent container
-        JLabel status = new JLabel("Join status: disconnected");
-        status.setName("joinStatusLabel");
-        status.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); // Thicker font applied
-        status.setForeground(Color.WHITE);
-        status.setAlignmentX(CENTER_ALIGNMENT);
-        containerBox.add(status);
-        containerBox.add(Box.createVerticalStrut(16));
+        JLabel playersHeader = new JLabel("Players in this lobby"); //
+        playersHeader.setFont(new Font("Comic Sans MS", Font.BOLD, 20)); playersHeader.setForeground(Color.WHITE); playersHeader.setAlignmentX(CENTER_ALIGNMENT); //
+        containerBox.add(playersHeader); containerBox.add(Box.createVerticalStrut(8)); //
 
-        // Subheader inside the translucent container
-        JLabel playersHeader = new JLabel("Players in this lobby");
-        playersHeader.setFont(new Font("Comic Sans MS", Font.BOLD, 20)); // Thicker font applied
-        playersHeader.setForeground(Color.WHITE);
-        playersHeader.setAlignmentX(CENTER_ALIGNMENT);
-        containerBox.add(playersHeader);
-        containerBox.add(Box.createVerticalStrut(8));
-
-        // Dynamic player listings
-        for (int i = 1; i <= 4; i++) {
-            JLabel slot = new JLabel("Player " + i + ": waiting...");
-            slot.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); // Thicker font applied
-            slot.setForeground(Color.WHITE); // White text for cleaner contrast
-            slot.setAlignmentX(CENTER_ALIGNMENT);
-            joinPlayerSlots.add(slot);
-            containerBox.add(slot);
-            containerBox.add(Box.createVerticalStrut(4));
+        for (int i = 1; i <= 4; i++) { //
+            JLabel slot = new JLabel("Player " + i + ": waiting..."); //
+            slot.setFont(new Font("Comic Sans MS", Font.BOLD, 16)); slot.setForeground(Color.WHITE); slot.setAlignmentX(CENTER_ALIGNMENT); //
+            joinPlayerSlots.add(slot); containerBox.add(slot); containerBox.add(Box.createVerticalStrut(4)); //
         }
 
-        // Drop the completed layout card container directly into your master tracking flow
-        body.add(containerBox);
-        body.add(Box.createVerticalStrut(20));
+        containerBox.setBounds(390, 200, 500, 280);
+        panel.add(containerBox);
 
-        // Clean footer controls panel matching the host flow layouts
-        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        controls.setOpaque(false);
+        // --- GUEST BUTTONS CONTROLS ---
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0)); //
+        controls.setOpaque(false); //
 
-        JButton leave = createButton("Leave Lobby");
-        leave.addActionListener(e -> {
-            screenManager.disconnectClient();
-            resetLobby();
-            screenManager.showMainMenu();
-        });
-        controls.add(leave);
+        JButton leave = createButton("Leave Lobby"); //
+        leave.addActionListener(e -> { screenManager.disconnectClient(); resetLobby(); screenManager.showMainMenu(); }); //
+        controls.add(leave); //
         
-        controls.setAlignmentX(CENTER_ALIGNMENT);
-        body.add(controls);
+        controls.setBounds(340, 565, 600, 60);
+        panel.add(controls);
 
-        body.add(Box.createVerticalGlue());
-        panel.add(body, BorderLayout.CENTER);
+        // --- FLOATING CHAT OVERLAY BOX (FIXED NARROW WIDTH) ---
+        JPanel chatWrapper = buildChatComponent(false);
+        chatWrapper.setBounds(995, 25, 260, 200);
+        panel.add(chatWrapper);
 
         return panel;
     }
@@ -554,5 +495,132 @@ public class LobbyPanel extends JPanel {
             }
         }
         return null;
+    }
+
+    private JPanel buildChatComponent(boolean isHost) {
+        JPanel panel = new JPanel(new BorderLayout(5, 5)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new Color(40, 40, 40, 140)); //
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
+                g2d.dispose();
+                super.paintComponent(g);
+            }
+        };
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        javax.swing.JTextArea displayArea = new javax.swing.JTextArea();
+        displayArea.setFont(new Font("Comic Sans MS", Font.PLAIN, 12)); //
+        displayArea.setEditable(false); //
+        displayArea.setLineWrap(true); //
+        displayArea.setWrapStyleWord(true); //
+        displayArea.setOpaque(false); //
+        displayArea.setForeground(Color.WHITE); //
+        
+        // Bind to the correct tracking reference based on layout state
+        if (isHost) {
+            this.hostChatDisplay = displayArea;
+        } else {
+            this.joinChatDisplay = displayArea;
+        }
+        
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(displayArea);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder()); //
+        scrollPane.setOpaque(false); //
+        scrollPane.getViewport().setOpaque(false); //
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JTextField inputField = new JTextField() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(255, 255, 255, 40)); //
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10); //
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        inputField.setFont(new Font("Comic Sans MS", Font.PLAIN, 12)); //
+        inputField.setForeground(Color.WHITE); //
+        inputField.setCaretColor(Color.WHITE); //
+        inputField.setOpaque(false); //
+        inputField.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6)); //
+        
+        if (isHost) {
+            this.hostChatInput = inputField;
+        } else {
+            this.joinChatInput = inputField;
+        }
+        
+        inputField.addActionListener(e -> triggerMessageSend(isHost));
+
+        JButton sendButton = new JButton("Send") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground()); //
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10); //
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        sendButton.setFont(new Font("Comic Sans MS", Font.BOLD, 11)); //
+        sendButton.setForeground(Color.WHITE); //
+        sendButton.setBackground(new Color(68, 70, 74)); //
+        sendButton.setFocusPainted(false); //
+        sendButton.setBorderPainted(false); //
+        sendButton.setContentAreaFilled(false); //
+        sendButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); //
+        sendButton.setPreferredSize(new Dimension(68, 26)); //
+        sendButton.addActionListener(e -> triggerMessageSend(isHost));
+
+        sendButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                sendButton.setBackground(new Color(95, 98, 104)); //
+            }
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                sendButton.setBackground(new Color(68, 70, 74)); //
+            }
+        });
+
+        JPanel inputRow = new JPanel(new BorderLayout(4, 0)); //
+        inputRow.setOpaque(false); //
+        inputRow.add(inputField, BorderLayout.CENTER); //
+        inputRow.add(sendButton, BorderLayout.EAST); //
+        
+        panel.add(inputRow, BorderLayout.SOUTH); //
+        return panel;
+    }
+
+    private void triggerMessageSend(boolean isHost) {
+        JTextField activeInput = isHost ? hostChatInput : joinChatInput;
+        if (activeInput == null) return;
+
+        String text = activeInput.getText().trim();
+        if (!text.isEmpty()) {
+            screenManager.getHelperClientConnection().sendChatMessage(text); //
+            activeInput.setText(""); // Clears the correct visible input field layout
+        }
+    }
+
+    public void appendChatMessage(int playerId, String message) {
+        SwingUtilities.invokeLater(() -> {
+            String formattedLine = "Player " + playerId + ": " + message + "\n"; //
+            
+            // Append the message text to both display components to support both states seamlessly
+            if (hostChatDisplay != null) {
+                hostChatDisplay.append(formattedLine);
+                hostChatDisplay.setCaretPosition(hostChatDisplay.getDocument().getLength()); //
+            }
+            if (joinChatDisplay != null) {
+                joinChatDisplay.append(formattedLine);
+                joinChatDisplay.setCaretPosition(joinChatDisplay.getDocument().getLength()); //
+            }
+        });
     }
 }

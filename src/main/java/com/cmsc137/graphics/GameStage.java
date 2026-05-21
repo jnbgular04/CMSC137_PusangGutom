@@ -21,12 +21,10 @@ public class GameStage extends JPanel {
     private SpriteRenderer spriteRenderer;
     private GameManager gameManager; 
     private Image backgroundImage;
-    private boolean isMultiplayer;
     private final Color[] scoreboardColors = { Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW };
 
-    public GameStage(GameManager gameManager, boolean isMultiplayer) { 
+    public GameStage(GameManager gameManager) { 
         this.gameManager = gameManager;
-        this.isMultiplayer = isMultiplayer;
         
         backgroundImage = new ImageIcon("assets/Game_Stage_BG.png").getImage();
 
@@ -44,10 +42,6 @@ public class GameStage extends JPanel {
         cat.y = 360;
         cat.name = "Player";
         cat.score = 0;
-    }
-
-    public void setMultiplayerMode(boolean isMultiplayer) {
-        this.isMultiplayer = isMultiplayer;
     }
 
     public void setLocalPlayerId(int playerId) {
@@ -72,7 +66,7 @@ public class GameStage extends JPanel {
         
         int targetX = cat.x + 100;
         int targetY = cat.y;
-        if (!isMultiplayer) {
+        if (!gameManager.isMultiplayerMode()) {
             java.awt.Point cursorPos = getMousePosition();
             targetX = (cursorPos != null) ? cursorPos.x : targetX;
             targetY = (cursorPos != null) ? cursorPos.y : targetY;
@@ -81,7 +75,7 @@ public class GameStage extends JPanel {
         // get the mice from game manager
         List<Mouse> mice = gameManager.getActiveMice();
         spriteRenderer.drawMice(g, mice);
-        if (isMultiplayer) {
+        if (gameManager.isMultiplayerMode()) {
             drawMultiplayerCats(g);
         } else {
             spriteRenderer.drawCat(g, cat, targetX, targetY);
@@ -112,7 +106,7 @@ public class GameStage extends JPanel {
             int winningScore = -1;
             int winnerId = -1;
             
-            if (isMultiplayer) {
+            if (gameManager.isMultiplayerMode()) {
                 for (int i = 0; i < connectedPlayers.length; i++) {
                     int networkId = connectedPlayers[i];
                     int pId = (networkId < 1) ? networkId + 1 : networkId;
@@ -130,7 +124,7 @@ public class GameStage extends JPanel {
             }
 
             g.setFont(new Font("Arial", Font.BOLD, 64));
-            if (isMultiplayer) {
+            if (gameManager.isMultiplayerMode()) {
                 if (localId == winnerId) {
                     g.setColor(Color.GREEN);
                     g.drawString("VICTORY!", 470, 180);
@@ -148,7 +142,7 @@ public class GameStage extends JPanel {
             g.drawString("Final Standings:", 545, 260);
 
             g.setFont(new Font("Arial", Font.BOLD, 20));
-            if (isMultiplayer) {
+            if (gameManager.isMultiplayerMode()) {
                 for (int i = 0; i < connectedPlayers.length; i++) {
                     int networkId = connectedPlayers[i];
                     int pId = (networkId < 1) ? networkId + 1 : networkId;
@@ -175,7 +169,7 @@ public class GameStage extends JPanel {
 
             g.setColor(Color.WHITE);
             g.setFont(new Font("Arial", Font.PLAIN, 18));
-            int footerY = isMultiplayer ? 350 + (connectedPlayers.length * 30) : 380;
+            int footerY = gameManager.isMultiplayerMode() ? 350 + (connectedPlayers.length * 30) : 380;
             g.drawString("Returning to menu shortly...", 520, footerY);
         }
     }
@@ -185,83 +179,25 @@ public class GameStage extends JPanel {
     }
 
     private void drawMultiplayerCats(Graphics g) {
-        int[] connectedPlayers = gameManager.getConnectedPlayers();
-        int localId = gameManager.getLocalPlayerId();
-        java.awt.Point cursor = getMousePosition();
-        int fallbackX = getWidth() / 2;
-        int fallbackY = getHeight() / 2;
-
-        boolean[] positionFilled = new boolean[5];
-
-        int localSlot = 1;
-        for (int i = 0; i < connectedPlayers.length; i++) {
-            if (connectedPlayers[i] == localId) {
-                localSlot = i + 1; 
-                break;
-            }
-        }
-        if (localSlot > 4) localSlot = 1;
-
-        for (int i = 0; i < connectedPlayers.length; i++) {
-            int remotePlayerId = connectedPlayers[i];
-            if (remotePlayerId == localId) {
-                continue;
-            }
-
-            int assignedSlot = i + 1;
-            if (assignedSlot > 4) continue; 
-
-            drawPlayerCatForSlot(g, remotePlayerId, assignedSlot, cursor, fallbackX, fallbackY);
-            positionFilled[assignedSlot] = true;
-        }
-
-        drawPlayerCat(g, localId, cursor, fallbackX, fallbackY, new boolean[5]); 
-        positionFilled[localSlot] = true;
-    }
-    
-    private void drawPlayerCatForSlot(Graphics g, int playerId, int slotId, java.awt.Point cursor, int fallbackX, int fallbackY) {
-        int[] anchor = getMultiplayerCatAnchor(slotId); 
-        int[] paw = gameManager.getPawTarget(playerId); 
+        List<Cat> cats = gameManager.getNetworkedCats();
         
-        int targetX = paw[0];
-        int targetY = paw[1];
-
-        spriteRenderer.drawCatForPlayer(g, slotId, anchor[0], anchor[1], targetX, targetY);
+        for (Cat c : cats) {
+            // Only draw if the player is connected (based on IDs the server sent)
+            if (isPlayerConnected(c.id)) {
+                int targetX = c.getAnimatedX(c.animTargetX);
+                int targetY = c.getAnimatedY(c.animTargetY);
+                
+                spriteRenderer.drawCatForPlayer(g, c.id, c.x, c.y, targetX, targetY);
+            }
+        }
     }
 
-    private void drawPlayerCat(Graphics g, int playerId, java.awt.Point cursor,
-            int fallbackX, int fallbackY, boolean[] drawn) {
-        if (playerId < 1 || playerId > 4 || drawn[playerId]) {
-            return;
+    private boolean isPlayerConnected(int id) {
+        int[] connected = gameManager.getConnectedPlayers();
+        for (int p : connected) {
+            if (p == id) return true;
         }
-        drawn[playerId] = true;
-        int localId = gameManager.getLocalPlayerId();
-        int[] anchor = getMultiplayerCatAnchor(playerId);
-        int targetX;
-        int targetY;
-        if (playerId == localId) {
-            targetX = (cursor != null) ? cursor.x : fallbackX;
-            targetY = (cursor != null) ? cursor.y : fallbackY;
-        } else {
-            int[] paw = gameManager.getPawTarget(playerId);
-            targetX = paw[0];
-            targetY = paw[1];
-        }
-        spriteRenderer.drawCatForPlayer(g, playerId, anchor[0], anchor[1], targetX, targetY);
-    }
-
-    private int[] getMultiplayerCatAnchor(int playerId) {
-        switch (playerId) {
-            case 2:
-                return new int[] { getWidth() / 2, 220 }; 
-            case 3:
-                return new int[] { getWidth() - 80, getHeight() / 2 }; 
-            case 4:
-                return new int[] { getWidth() / 2, getHeight() - 90 }; 
-            case 1:
-            default:
-                return new int[] { 80, getHeight() / 2 };      
-        }
+        return false;
     }
 
     private void drawScoreboard(Graphics g) {
@@ -273,13 +209,13 @@ public class GameStage extends JPanel {
         if (connectedPlayers == null || connectedPlayers.length == 0) {
             connectedPlayers = new int[] { 1 };
         }
-        
+
         int playerCount = connectedPlayers.length;
-        if (!isMultiplayer) {
+        if (!gameManager.isMultiplayerMode()) {
             playerCount = 1;
             connectedPlayers = new int[] { 1 };
         }
-        
+
         int panelH = 62 + (playerCount * 22);
 
         g.setColor(new Color(0, 0, 0, 140));
@@ -293,8 +229,8 @@ public class GameStage extends JPanel {
         if (scores == null || scores.length == 0) {
             scores = new int[4]; 
         }
-        
-        if (!isMultiplayer) {
+
+        if (!gameManager.isMultiplayerMode()) {
             scores[0] = gameManager.getScore();
         }
 

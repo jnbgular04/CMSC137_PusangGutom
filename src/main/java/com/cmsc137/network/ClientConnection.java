@@ -84,10 +84,6 @@ public class ClientConnection implements Runnable {
         }
     }
 
-    public int getLocalPlayerID() {
-        return localPlayerID;
-    }
-
     @Override
     public void run() {
         try {

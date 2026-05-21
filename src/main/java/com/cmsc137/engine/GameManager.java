@@ -17,193 +17,222 @@ import com.cmsc137.network.ClientConnection;
  */
 public class GameManager {
 
-    private ScreenManager screenManager;
-    private Random randomGenerator;
-    
-    // Game State Variables
-    private int score;
-    private int timeLeftSeconds;
-    private boolean isGameOver;
-    private boolean isGameActive;
-    private int nextMouseId = 1;
-    
-    // Timing Variables (Based on 60FPS tick rate)
-    private int frameCounter = 0;
-    private int postGameTimerFrames = 0;
-    private final int FPS = 60;
-    private int spawnTimerFrames = 0;
-    
-    // Spawning Constants ("The Pit" Boundaries)
-    private final int PIT_MIN_X = 200;
-    private final int PIT_MAX_X = 1000;
-    private final int PIT_MIN_Y = 200;
-    private final int PIT_MAX_Y = 440;
-    
-    // Entity Tracking
-    private List<Mouse> activeMice;
-    private List<Cat> networkedCats;
+private ScreenManager screenManager;
+private Random randomGenerator;
 
-    private int[] multiplayerScores = new int[4];
-    private int[] connectedPlayers = new int[] { 1 };
-    private ClientConnection clientConnection;
-    private int localPlayerId = 1;
-    private final int[] pawTargetX = new int[4];
-    private final int[] pawTargetY = new int[4];
-    private static final int PIT_CENTER_X = 600;
-    private static final int PIT_CENTER_Y = 320;
+// Game State Variables
+private int score;
+private int timeLeftSeconds;
+private boolean isGameOver;
+private boolean isGameActive;
+private boolean isMultiplayerMode = false;
+private int nextMouseId = 1;
 
-    
-    
-    public GameManager(ScreenManager screenManager) {
-        this.screenManager = screenManager;
-        this.randomGenerator = new Random();
-        this.activeMice = new ArrayList<>();
+// Timing Variables (Based on 60FPS tick rate)
+private int frameCounter = 0;
+private int postGameTimerFrames = 0;
+private final int FPS = 60;
+private int spawnTimerFrames = 0;
+
+// Spawning Constants ("The Pit" Boundaries)
+private final int PIT_MIN_X = 200;
+private final int PIT_MAX_X = 1000;
+private final int PIT_MIN_Y = 200;
+private final int PIT_MAX_Y = 440;
+
+// Entity Tracking
+private List<Mouse> activeMice;
+private List<Cat> networkedCats;
+
+private int[] multiplayerScores = new int[4];
+private int[] connectedPlayers = new int[] { 1 };
+private ClientConnection clientConnection;
+private int localPlayerId = 1;
+private final int[] pawTargetX = new int[4];
+private final int[] pawTargetY = new int[4];
+private static final int PIT_CENTER_X = 600;
+private static final int PIT_CENTER_Y = 320;
+
+public GameManager(ScreenManager screenManager) {
+    this.screenManager = screenManager;
+    this.randomGenerator = new Random();
+    this.activeMice = new ArrayList<>();
+    this.networkedCats = new ArrayList<>();
+    initializeNetworkedCats();
+}
+
+private void initializeNetworkedCats() {
+    networkedCats.clear();
+    for (int i = 1; i <= 4; i++) {
+        Cat cat = new Cat();
+        cat.id = i;
+        int[] anchor = getMultiplayerCatAnchor(i);
+        cat.x = anchor[0];
+        cat.y = anchor[1];
+        networkedCats.add(cat);
     }
-    
-    /**
-     * Initializes or resets the game state for a new session.
-     */
-    public void startGame() {
-        this.score = 0;
-        this.timeLeftSeconds = 10; // 1-minute countdown
-        this.isGameOver = false;
-        this.isGameActive = true;
-        this.frameCounter = 0;
-        this.postGameTimerFrames = 0;
-        this.activeMice.clear();
-        this.nextMouseId = 1;
-        this.multiplayerScores = new int[4];
-        resetPawTargets();
+}
+
+private int[] getMultiplayerCatAnchor(int playerId) {
+    // Locked Resolution: 1280 x 720
+    switch (playerId) {
+        case 2: return new int[] { 640, 0 }; // Top
+        case 3: return new int[] { 1280, 360 }; // Right
+        case 4: return new int[] { 640, 720 }; // Bottom
+        case 1:
+        default: return new int[] { 0, 360 }; // Left
+    }
+}
+
+/**
+ * Initializes or resets the game state for a new session.
+ */
+public void startGame() {
+    this.score = 0;
+    this.timeLeftSeconds = 60; // 1-minute countdown
+    this.isGameOver = false;
+    this.isGameActive = true;
+    this.frameCounter = 0;
+    this.postGameTimerFrames = 0;
+    this.activeMice.clear();
+    this.nextMouseId = 1;
+    this.multiplayerScores = new int[4];
+    resetPawTargets();
+    initializeNetworkedCats(); // Ensure anchors are fresh
+    if (!isMultiplayerMode) {
+        this.connectedPlayers = new int[] { 1 };
+    }
+
+    System.out.println("Game Started! 60 Seconds on the clock.");
+}
+
+/**
+ * Called 60 times per second by the GameLoop.
+ */
+public void tick() {
+    if (!isGameActive) return;
+
+    frameCounter++;
+
+    // Update all cat animations
+    for (Cat cat : networkedCats) {
+        cat.updateAnimation();
+    }
+
+    // Handle active gameplay logic
+    if (!isGameOver) {
+        // Countdown timer (same for singleplayer and multiplayer)
+        if (frameCounter >= FPS) {
+            timeLeftSeconds--;
+            frameCounter = 0;
+
+            if (timeLeftSeconds <= 0) {
+                triggerGameOver();
+            }
+        }
+
+        // Local spawn only — multiplayer mice come from the server
         if (!isMultiplayerMode) {
-            this.connectedPlayers = new int[] { 1 };
-        }
-        
-        System.out.println("Game Started! 60 Seconds on the clock.");
-    }
-    
-    /**
-     * Called 60 times per second by the GameLoop.
-     */
-    public void tick() {
-        if (!isGameActive) return;
-        
-        frameCounter++;
-        
-        // Handle active gameplay logic
-        if (!isGameOver) {
-            // Countdown timer (same for singleplayer and multiplayer)
-            if (frameCounter >= FPS) {
-                timeLeftSeconds--;
-                frameCounter = 0;
-                
-                if (timeLeftSeconds <= 0) {
-                    triggerGameOver();
-                }
-            }
-            
-            // Local spawn only — multiplayer mice come from the server
-            if (!isMultiplayerMode) {
-                spawnTimerFrames++;
-                if (spawnTimerFrames >= (FPS / 2)) { // Spawns every 0.5 seconds
-                    spawnMouse();
-                    spawnTimerFrames = 0;
-                }
-            }
-        }
-        // Handle Post-Game "Session Result" Delay (5 seconds)
-        else {
-        	postGameTimerFrames++;
-            if (isMultiplayerMode == false && postGameTimerFrames >= (5 * FPS)) { // 5 seconds * 60 FPS
-                endSessionAndReturnToMenu();
-            } else if (postGameTimerFrames >= (10 * FPS)) { // Fixed syntax error here
-                endSessionAndReturnToMenu();
+            spawnTimerFrames++;
+            if (spawnTimerFrames >= (FPS / 2)) { // Spawns every 0.5 seconds
+                spawnMouse();
+                spawnTimerFrames = 0;
             }
         }
     }
-    
-    /**
-     * Generates a new Mouse entity within the locked Pit dimensions.
-     */
-    private void spawnMouse() {
-        int randomX = randomGenerator.nextInt((PIT_MAX_X - PIT_MIN_X) + 1) + PIT_MIN_X;
-        int randomY = randomGenerator.nextInt((PIT_MAX_Y - PIT_MIN_Y) + 1) + PIT_MIN_Y;
-
-        // Pass the nextMouseId and then increment it
-        Mouse newMouse = new Mouse(nextMouseId++, randomX, randomY); 
-        activeMice.add(newMouse);
-
-        System.out.println("Spawned Mouse ID [" + (nextMouseId-1) + "] at X:" + randomX + " Y:" + randomY);
-    }
-    
-    /**
-     * Triggers the Game Over state.
-     */
-    private void triggerGameOver() {
-        isGameOver = true;
-        activeMice.clear(); // Despawn all mice
-        System.out.println("Game Over! Final Score: " + score);
-        System.out.println("Displaying results for 5 seconds...");
-    }
-    
-    /**
-     * Exits the game state and tells ScreenManager to swap back to the Main Menu.
-     */
-    private void endSessionAndReturnToMenu() {
-        isGameActive = false;
-        System.out.println("Returning to Main Menu.");
-        
-        SwingUtilities.invokeLater(() -> {
-            screenManager.showMainMenu();
-        });
-    }
-    
-    // --- Integration Methods for Yanika & Jaz ---
-    
-    public void incrementScore() {
-        if (!isGameOver) {
-            score++;
+    // Handle Post-Game "Session Result" Delay (5 seconds)
+    else {
+    	postGameTimerFrames++;
+        if (isMultiplayerMode == false && postGameTimerFrames >= (5 * FPS)) { // 5 seconds * 60 FPS
+            endSessionAndReturnToMenu();
+        } else if (postGameTimerFrames >= (10 * FPS)) { // Fixed syntax error here
+            endSessionAndReturnToMenu();
         }
     }
-    
-    public int getScore() { return score; }
-    public int getTimeLeft() { return timeLeftSeconds; }
-    public boolean getIsGameOver() { return isGameOver; }
-    public List<Mouse> getActiveMice() { return activeMice; }
-    public int[] getMultiplayerScores() { return multiplayerScores.clone(); }
-    public int[] getConnectedPlayers() { return connectedPlayers.clone(); }
-    public int getLocalPlayerId() { return localPlayerId; }
+}
 
-    private boolean isMultiplayerMode = false;
-    private ClientConnection clientConnection;
-    
-    public boolean isMultiplayerMode() {
-    	return this.isMultiplayerMode;
-    }
+/**
+ * Generates a new Mouse entity within the locked Pit dimensions.
+ */
+private void spawnMouse() {
+    int randomX = randomGenerator.nextInt((PIT_MAX_X - PIT_MIN_X) + 1) + PIT_MIN_X;
+    int randomY = randomGenerator.nextInt((PIT_MAX_Y - PIT_MIN_Y) + 1) + PIT_MIN_Y;
 
-    public void setMultiplayerMode(boolean active) {
-        this.isMultiplayerMode = active;
-    }
-    
-    public ClientConnection getClientConnection() {
-    	return this.clientConnection;
-    }
-    
-    public void setClientConnection(ClientConnection cc) {
-    	this.clientConnection = cc;
-    }
+    // Pass the nextMouseId and then increment it
+    Mouse newMouse = new Mouse(nextMouseId++, randomX, randomY); 
+    activeMice.add(newMouse);
 
-    public boolean isMultiplayerMode() {
-        return isMultiplayerMode;
-    }
+    System.out.println("Spawned Mouse ID [" + (nextMouseId-1) + "] at X:" + randomX + " Y:" + randomY);
+}
 
-    public void setClientConnection(ClientConnection clientConnection) {
-        this.clientConnection = clientConnection;
-    }
+/**
+ * Triggers the Game Over state.
+ */
+private void triggerGameOver() {
+    isGameOver = true;
+    activeMice.clear(); // Despawn all mice
+    System.out.println("Game Over! Final Score: " + score);
+    System.out.println("Displaying results for 5 seconds...");
+}
 
-    public void setLocalPlayerId(int playerId) {
-        this.localPlayerId = Math.max(1, Math.min(4, playerId));
-    }
+/**
+ * Exits the game state and tells ScreenManager to swap back to the Main Menu.
+ */
+private void endSessionAndReturnToMenu() {
+    isGameActive = false;
+    System.out.println("Returning to Main Menu.");
 
+    SwingUtilities.invokeLater(() -> {
+        screenManager.showMainMenu();
+    });
+}
+
+// --- Integration Methods for Yanika & Jaz ---
+
+public void incrementScore() {
+    if (!isGameOver) {
+        score++;
+    }
+}
+
+public int getScore() { return score; }
+public int getTimeLeft() { return timeLeftSeconds; }
+public boolean getIsGameOver() { return isGameOver; }
+public List<Mouse> getActiveMice() { return activeMice; }
+public int[] getMultiplayerScores() { return multiplayerScores.clone(); }
+public int[] getConnectedPlayers() { return connectedPlayers.clone(); }
+public int getLocalPlayerId() { return localPlayerId; }
+
+public List<Cat> getNetworkedCats() {
+    return networkedCats;
+}
+
+public boolean isMultiplayerMode() {
+    return isMultiplayerMode;
+}
+
+public void setMultiplayerMode(boolean active) {
+    this.isMultiplayerMode = active;
+}
+
+public ClientConnection getClientConnection() {
+    return clientConnection;
+}
+
+public void setClientConnection(ClientConnection clientConnection) {
+    this.clientConnection = clientConnection;
+}
+
+public boolean isLocalCatAnimating() {
+    if (networkedCats == null || networkedCats.isEmpty()) return false;
+    int idx = localPlayerId - 1;
+    if (idx < 0 || idx >= networkedCats.size()) return false;
+    return networkedCats.get(idx).isAnimating;
+}
+
+public void setLocalPlayerId(int playerId) {
+    this.localPlayerId = Math.max(1, Math.min(4, playerId));
+}
     public void sendMultiplayerClick(int x, int y) {
         if (isMultiplayerMode && clientConnection != null) {
             clientConnection.sendClick(x, y);

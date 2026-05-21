@@ -48,7 +48,7 @@ public class ScreenManager {
 
         mainMenuPanel = new MainMenuPanel(mainFrame, this);
         lobbyPanel = new LobbyPanel(this);
-        gameStagePanel = new GameStage(gameManager, false); 
+        gameStagePanel = new GameStage(gameManager); 
 
         this.gameLoop = new GameLoop(gameManager, gameStagePanel);
 
@@ -74,23 +74,19 @@ public class ScreenManager {
     }
 
     public void showGame(boolean isMultiplayer) {
-        if (!isMultiplayer) {
+        gameManager.setMultiplayerMode(isMultiplayer);
+        if (!gameManager.isMultiplayerMode()) {
             System.out.println("Starting Singleplayer Game Mode...");
             gameManager.setLocalPlayerId(1);
-            gameManager.setMultiplayerMode(false);
             gameStagePanel.setLocalPlayerId(gameManager.getLocalPlayerId());
-            gameStagePanel.setMultiplayerMode(false);
             gameManager.startGame(); // Reset and start game state
             gameLoop.start();        // Begin the 60FPS tick loop
-        } else {
+            } else {
             System.out.println("Starting Multiplayer Game Mode (Milestone 2)...");
-            gameManager.setMultiplayerMode(true);
             gameStagePanel.setLocalPlayerId(gameManager.getLocalPlayerId());
-            gameStagePanel.setMultiplayerMode(true);
             gameManager.startGame();
             gameLoop.start();
-        }
-
+            }
         cardLayout.show(cardContainer, GAME_VIEW);
         System.out.println("STATE CHECK: View Swapped to -> " + GAME_VIEW);
 

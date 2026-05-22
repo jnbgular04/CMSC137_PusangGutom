@@ -30,7 +30,7 @@ public class SpriteRenderer {
     
     private void loadAssets() {
         try {
-            mouseImage = ImageIO.read(new File("assets/Mouse_Target.PNG"));
+            mouseImage = ImageIO.read(new File("assets/Mouse_Target.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }

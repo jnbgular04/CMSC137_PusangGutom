@@ -246,7 +246,7 @@ public class LobbyPanel extends JPanel {
 
     private JPanel buildHostPanel() {
         try {
-            hostBgImage = javax.imageio.ImageIO.read(new java.io.File("assets/HostBG.png")); //
+            hostBgImage = javax.imageio.ImageIO.read(new java.io.File("assets/HostBg.png")); //
         } catch (Exception e) {
             e.printStackTrace(); //
         }
